@@ -15,5 +15,13 @@
   "bugs": {
     "url": "https://github.com/woni-d/get-my-commit/issues"
   },
-  "homepage": "https://github.com/woni-d/get-my-commit#readme"
+  "homepage": "https://github.com/woni-d/get-my-commit#readme",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "clear": "^0.1.0",
+    "figlet": "^1.5.0",
+    "inquirer": "^7.3.3",
+    "minimist": "^1.2.5",
+    "minimist-options": "^4.1.0"
+  }
 }
