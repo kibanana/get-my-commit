@@ -1,0 +1,19 @@
+{
+  "name": "get-my-commit",
+  "version": "1.0.0",
+  "description": "Get my commit in the repository",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/woni-d/get-my-commit.git"
+  },
+  "author": "Woni",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/woni-d/get-my-commit/issues"
+  },
+  "homepage": "https://github.com/woni-d/get-my-commit#readme"
+}
