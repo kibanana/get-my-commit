@@ -63,4 +63,42 @@ export default async () => {
                 choices: repositories.map((repo: Repository) => repo.name)
             }
         ])
+    if (checkedRepositories.length === 0) return null
+    
+    const { isNotFixed } =  await inquirer
+        .prompt([
+            {
+                type: 'confirm',
+                name: 'isNotFixed',
+                message: 'The default branch is master. Would you like to change to another branch?',
+            }
+        ])
+    
+    const repositoryMap: { [key: string]: string } = {}
+    if (isNotFixed && checkedRepositories.length > 0) {
+        const { changedRepositories } = await inquirer
+            .prompt([
+                {
+                    type: 'checkbox',
+                    name: 'changedRepositories',
+                    message: 'Select the repositories where you want to change branch',
+                    choices: checkedRepositories
+                }
+            ])
+        
+        changedRepositories.forEach(async (repo: string) => {
+            const branches = await Github.getBranch(token, login, repo)
+
+            const { defaultBranch } = await inquirer
+                .prompt([
+                    {
+                        type: 'rawlist',
+                        name: 'defaultBranch',
+                        message: 'Choose one branch that will be the default branch',
+                        choices: branches
+                    }
+                ])
+            repositoryMap[repo] = defaultBranch
+        })
+    }
 }
