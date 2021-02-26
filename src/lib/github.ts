@@ -26,6 +26,8 @@ export const getBranch = async (token: string, user: string, repo: string) => {
         
             if (response && response.status === 200 && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 result = [...result, ...response.data]
+            } else if (response.status === 401) {
+                return null
             } else {
                 break
             }
@@ -62,6 +64,8 @@ export const getCommit = async (token: string, user: string, repo: string) => {
         
             if (response && response.status === 200 && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 result = [...result, ...response.data]
+            } else if (response.status === 401) {
+                return null
             } else {
                 break
             }
@@ -86,8 +90,12 @@ export const getProfile = async (token: string) => {
             }
         )
     
-        if (response && response.data) {
+        if (response && response.status === 200 && response.data) {
             return response.data
+        } else if (response.status === 401) {
+            return null
+        } else {
+            return null
         }
     } catch (err) {
         console.log(err)
@@ -105,7 +113,7 @@ export const getRepository = async (token: string) => {
                 {
                     params: {
                         visibility: 'all',
-                        affiliation: 'owner,collaborator,organization_member',
+                        affiliation: 'owner,collaborator',
                         sort: 'full_name',
                         per_page: 100,
                         page: i
@@ -119,6 +127,8 @@ export const getRepository = async (token: string) => {
     
             if (response && response.status === 200 && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 result = [...result, ...response.data]
+            } else if (response.status === 401) {
+                return null
             } else {
                 break
             }
