@@ -110,4 +110,14 @@ export default async () => {
             commitMap[repo] = commits
         }
     })
+
+    const { fileType } = await inquirer
+        .prompt([
+            {
+                type: 'rawlist',
+                name: 'fileType',
+                message: 'Which file type would you like to extract?',
+                choices: ['Markdown(.md)', 'HTML(.html)', 'Excel(.xlsx)']
+            }
+        ])
 }
