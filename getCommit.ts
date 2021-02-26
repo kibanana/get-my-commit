@@ -10,6 +10,9 @@ const getCommits = async () => {
                     sort: 'created-+1',
                     per_page: 100,
                     page: 0
+                },
+                headers: {
+                    Authorization: `token ${config.PERSONAL_ACCESS_TOKEN}`
                 }
             }
         )
@@ -23,5 +26,5 @@ const getCommits = async () => {
 }
 
 getCommits()
-    .then(result => console.log(result))
+    .then(result => console.log(result, typeof result, result.length))
     .catch(err => console.log(err))

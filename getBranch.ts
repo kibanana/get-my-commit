@@ -4,7 +4,12 @@ import config from './config'
 const getBranches = async () => {
     try {
         const response = await axios.get(
-            `${config.GITHUB_API_URL}/repos/${config.TEMP_USER}/${config.TEMP_REPO}/branches`
+            `${config.GITHUB_API_URL}/repos/${config.TEMP_USER}/${config.TEMP_REPO}/branches`,
+            {
+                headers: {
+                    Authorization: `token ${config.PERSONAL_ACCESS_TOKEN}`
+                }
+            }
         )
     
         if (response && response.data) {
