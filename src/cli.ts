@@ -142,7 +142,8 @@ export default async () => {
             }
         ])
     
-    let data = ''
+    let data = '<!doctype html><html><head><title>Get my commit</title></head><body></body></html>'
+
     switch (fileType[selectedFileType]) {
         case '.md':
             checkedRepositories.forEach((repo: string) => {
@@ -156,12 +157,23 @@ export default async () => {
             })
             break
         case '.html':
-            break
-        case '.xlsx':
+            let subData = ''
+            checkedRepositories.forEach((repo: string) => {
+                subData += `<h1>${repo} (branch: ${repositoryMap[repo] || 'master'})</h1>`
+                const commits = commitMap[repo]
+                if (Array.isArray(commits) && commits.length > 0) {
+                    subData += `<ul>`
+                    commits.forEach((commit: Commit) => {
+                        subData += `<li>${commit.commit.message}</li>`
+                    })
+                    subData += `</ul>`
+                }
+            })
+            data = data.replace('<body></body>', `<body>${subData}</body>`)
             break
     }
 
-    await fsAsync.writeFileSync(`${__dirname}/get_my_commit${fileType[selectedFileType]}`, data)
+    await fsAsync.writeFileSync(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
 
     console.log('Commit log file was saved successfully')
 }
