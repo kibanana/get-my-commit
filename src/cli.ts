@@ -101,7 +101,9 @@ export default async () => {
                 }
             ])
         
-        changedRepositories.forEach(async (repo: string) => {
+        for (let i = 0; i < changedRepositories.length; i++) {
+            const repo = changedRepositories[i]
+
             let branches
             try {
                 branches = await Github.getBranch(token, login, repo)
@@ -121,11 +123,13 @@ export default async () => {
 
                 repositoryMap[repo] = defaultBranch
             }
-        })
+        }
     }
     
     const commitMap: { [key: string]: Commit[] } = {}
-    checkedRepositories.forEach(async (repo: string) => {
+    for (let i = 0; i < checkedRepositories.length; i++) {
+        const repo = checkedRepositories[i]
+
         let commits
         try {
             commits = await Github.getCommit(token, login, repo)
@@ -134,7 +138,7 @@ export default async () => {
         if (Array.isArray(commits) && commits.length > 0) {
             commitMap[repo] = commits
         }
-    })
+    }
 
     const { selectedFileType } = await inquirer
         .prompt([
@@ -150,29 +154,34 @@ export default async () => {
 
     switch (fileType[selectedFileType]) {
         case '.md':
-            checkedRepositories.forEach((repo: string) => {
+            for (let i = 0; i < checkedRepositories.length; i++) {
+                const repo = checkedRepositories[i]
+
                 data += `# ${repo} (branch: ${repositoryMap[repo] || 'master'})${os.EOL}`
                 const commits = commitMap[repo]
                 if (Array.isArray(commits) && commits.length > 0) {
-                    commits.forEach((commit: Commit) => {
+                    for (let j = 0; j < commits.length; j++) {
+                        const commit = commits[j]
                         data += `- ${commit.commit.message}${os.EOL}`
-                    })
+                    }
                 }
-            })
+            }
             break
         case '.html':
             let subData = ''
-            checkedRepositories.forEach((repo: string) => {
+            for (let i = 0; i < checkedRepositories.length; i++) {
+                const repo = checkedRepositories[i]
                 subData += `<h1>${repo} (branch: ${repositoryMap[repo] || 'master'})</h1>`
                 const commits = commitMap[repo]
                 if (Array.isArray(commits) && commits.length > 0) {
                     subData += `<ul>`
-                    commits.forEach((commit: Commit) => {
+                    for (let j = 0; j < commits.length; j++) {
+                        const commit = commits[j]
                         subData += `<li>${commit.commit.message}</li>`
-                    })
+                    }
                     subData += `</ul>`
                 }
-            })
+            }
             data = data.replace('<body></body>', `<body>${subData}</body>`)
             break
     }
