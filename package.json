@@ -4,7 +4,7 @@
   "description": "Get my commit in the repository",
   "main": "index.ts",
   "scripts": {
-    "start": "ts-node getBranch.ts",
+    "start": "ts-node getCommit.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

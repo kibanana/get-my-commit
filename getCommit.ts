@@ -4,18 +4,12 @@ import config from './config'
 const getCommits = async () => {
     try {
         const response = await axios.get(
-            `${config.GITHUB_API_URL}/search/commits`,
+            `${config.GITHUB_API_URL}/repos/${config.TEMP_USER}/${config.TEMP_REPO}/commits`,
             {
                 params: {
-                    q: 'q',
-                    mediaType: {
-                        previews: [
-                          'cloak'
-                        ]
-                    }
-                },
-                headers: {
-                    'Accept': 'application/vnd.github.cloak-preview+json'
+                    sort: 'created-+1',
+                    per_page: 100,
+                    page: 0
                 }
             }
         )
