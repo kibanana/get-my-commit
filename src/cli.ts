@@ -2,6 +2,7 @@ import inquirer from 'inquirer'
 import terminalImage from 'terminal-image'
 import axios from 'axios'
 import * as Github from './lib/github'
+import Repository from './ts/Repository'
 
 export default async () => {
     const { token } = await inquirer
@@ -50,4 +51,16 @@ export default async () => {
     if (!isCorrectUser) {
         return null
     }
+
+    const repositories = await Github.getRepository(token)
+    
+    const { checkedRepositories } = await inquirer
+        .prompt([
+            {
+                type: 'checkbox',
+                name: 'checkedRepositories',
+                message: 'Select the repositories where you want to get the commits',
+                choices: repositories.map((repo: Repository) => repo.name)
+            }
+        ])
 }
