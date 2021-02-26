@@ -1,9 +1,12 @@
 import inquirer from 'inquirer'
 import terminalImage from 'terminal-image'
 import axios from 'axios'
+import os from 'os'
 import * as Github from './lib/github'
 import Repository from './ts/Repository'
 import Commit from './ts/Commit'
+import * as fsAsync from './lib/fsAsync'
+import fileType from './lib/fileType'
 
 export default async () => {
     const { token } = await inquirer
@@ -15,7 +18,12 @@ export default async () => {
             }
         ])
     
-    const user = await Github.getProfile(token)
+    let user
+    try {
+        user = await Github.getProfile(token)
+    } catch (err) {}
+
+    if (!user) return null
 
     const {
         login,
@@ -49,11 +57,14 @@ export default async () => {
             }
         ])
     
-    if (!isCorrectUser) {
-        return null
-    }
+    if (!isCorrectUser) return null
 
-    const repositories = await Github.getRepository(token)
+    let repositories
+    try {
+        repositories = await Github.getRepository(token)
+    } catch (err) {}
+
+    if (!repositories) return null
     
     const { checkedRepositories } = await inquirer
         .prompt([
@@ -64,7 +75,7 @@ export default async () => {
                 choices: repositories.map((repo: Repository) => repo.name)
             }
         ])
-    if (checkedRepositories.length === 0) return null
+    if (Array.isArray(checkedRepositories) && checkedRepositories.length === 0) return null
     
     const { isNotFixed } =  await inquirer
         .prompt([
@@ -76,7 +87,7 @@ export default async () => {
         ])
     
     const repositoryMap: { [key: string]: string } = {}
-    if (isNotFixed && checkedRepositories.length > 0) {
+    if (isNotFixed && Array.isArray(checkedRepositories) && checkedRepositories.length > 0) {
         const { changedRepositories } = await inquirer
             .prompt([
                 {
@@ -88,36 +99,69 @@ export default async () => {
             ])
         
         changedRepositories.forEach(async (repo: string) => {
-            const branches = await Github.getBranch(token, login, repo)
+            let branches
+            try {
+                branches = await Github.getBranch(token, login, repo)
+            } catch (err) {}
 
-            const { defaultBranch } = await inquirer
-                .prompt([
-                    {
-                        type: 'rawlist',
-                        name: 'defaultBranch',
-                        message: 'Choose one branch that will be the default branch',
-                        choices: branches
-                    }
-                ])
-            repositoryMap[repo] = defaultBranch
+            if (branches) {
+                const { defaultBranch } = await inquirer
+                    .prompt([
+                        {
+                            type: 'rawlist',
+                            name: 'defaultBranch',
+                            message: 'Choose one branch that will be the default branch',
+                            choices: branches
+                        }
+                    ])
+
+                repositoryMap[repo] = defaultBranch
+            }
         })
     }
     
     const commitMap: { [key: string]: Commit[] } = {}
     checkedRepositories.forEach(async (repo: string) => {
-        const commits = await Github.getCommit(token, login, repo)
-        if (commits.length > 0) {
+        let commits
+        try {
+            commits = await Github.getCommit(token, login, repo)
+        } catch (err) {}
+
+        if (Array.isArray(commits) && commits.length > 0) {
             commitMap[repo] = commits
         }
     })
 
-    const { fileType } = await inquirer
+    const { selectedFileType } = await inquirer
         .prompt([
             {
                 type: 'rawlist',
-                name: 'fileType',
+                name: 'selectedFileType',
                 message: 'Which file type would you like to extract?',
-                choices: ['Markdown(.md)', 'HTML(.html)', 'Excel(.xlsx)']
+                choices: Object.keys(fileType)
             }
         ])
+    
+    let data = ''
+    switch (fileType[selectedFileType]) {
+        case '.md':
+            checkedRepositories.forEach((repo: string) => {
+                data += `# ${repo} (branch: ${repositoryMap[repo] || 'master'})${os.EOL}`
+                const commits = commitMap[repo]
+                if (Array.isArray(commits) && commits.length > 0) {
+                    commits.forEach((commit: Commit) => {
+                        data += `- ${commit.commit.message}${os.EOL}`
+                    })
+                }
+            })
+            break
+        case '.html':
+            break
+        case '.xlsx':
+            break
+    }
+
+    await fsAsync.writeFileSync(`${__dirname}/get_my_commit${fileType[selectedFileType]}`, data)
+
+    console.log('Commit log file was saved successfully')
 }
