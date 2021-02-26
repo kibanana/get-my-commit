@@ -1,5 +1,6 @@
 import inquirer from 'inquirer'
 import terminalImage from 'terminal-image'
+import chalk from 'chalk'
 import axios from 'axios'
 import os from 'os'
 import * as Github from './lib/github'
@@ -42,11 +43,11 @@ export default async () => {
     const image = Buffer.from(responseImage.data, 'binary')
 
     console.log(await terminalImage.buffer(image, { width: '50%', height: '50%' }))
-    console.log(`[${url}]`)
-    console.log(`${login} (${name})`)
-    console.log(`${bio}`)
-    console.log(`${public_repos} public repos & ${total_private_repos} private_repos`)
-    console.log(`Created at ${createdAt} & Updated at ${updatedAt}`)
+    console.log(chalk.magenta(`[${url}]`))
+    console.log(chalk.magenta(`${login} (${name})`))
+    console.log(chalk.magenta(`${bio}`))
+    console.log(chalk.magenta(`${public_repos} public repos & ${total_private_repos} private_repos`))
+    console.log(chalk.magenta(`Created at ${createdAt} & Updated at ${updatedAt}`))
 
     const { isCorrectUser } = await inquirer
         .prompt([
@@ -65,7 +66,7 @@ export default async () => {
     } catch (err) {}
 
     if (!repositories) return null
-    
+
     const { checkedRepositories } = await inquirer
         .prompt([
             {
@@ -175,5 +176,5 @@ export default async () => {
 
     await fsAsync.writeFileSync(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
 
-    console.log('Commit log file was saved successfully')
+    console.log(chalk.magenta(`get_my_commit${fileType[selectedFileType]} file was saved successfully`))
 }
