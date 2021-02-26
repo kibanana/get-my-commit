@@ -6,9 +6,8 @@ const getProfile = async () => {
         const response = await axios.get(
             `${config.GITHUB_API_URL}/user`,
             {
-                auth: {
-                    username: 'woni-d',
-                    password: config.PERSONAL_ACCESS_TOKEN
+                headers: {
+                    Authorization: `token ${config.PERSONAL_ACCESS_TOKEN}`
                 }
             }
         )

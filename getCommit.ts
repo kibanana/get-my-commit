@@ -1,10 +1,10 @@
 import axios from 'axios'
 import config from './config'
 
-const getCommits = async () => {
+export default async (token: string, user: string, repo: string) => {
     try {
         const response = await axios.get(
-            `${config.GITHUB_API_URL}/repos/${config.TEMP_USER}/${config.TEMP_REPO}/commits`,
+            `${config.GITHUB_API_URL}/repos/${user}/${repo}/commits`,
             {
                 params: {
                     sort: 'created-+1',
@@ -12,7 +12,7 @@ const getCommits = async () => {
                     page: 0
                 },
                 headers: {
-                    Authorization: `token ${config.PERSONAL_ACCESS_TOKEN}`
+                    Authorization: `token ${token}`
                 }
             }
         )
@@ -24,7 +24,3 @@ const getCommits = async () => {
         console.log(err)
     }
 }
-
-getCommits()
-    .then(result => console.log(result, typeof result, result.length))
-    .catch(err => console.log(err))

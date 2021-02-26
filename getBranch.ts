@@ -1,13 +1,13 @@
 import axios from 'axios'
 import config from './config'
 
-const getBranches = async () => {
+export default async (token: string, user: string, repo: string) => {
     try {
         const response = await axios.get(
-            `${config.GITHUB_API_URL}/repos/${config.TEMP_USER}/${config.TEMP_REPO}/branches`,
+            `${config.GITHUB_API_URL}/repos/${user}/${repo}/branches`,
             {
                 headers: {
-                    Authorization: `token ${config.PERSONAL_ACCESS_TOKEN}`
+                    Authorization: `token ${token}`
                 }
             }
         )
@@ -19,7 +19,3 @@ const getBranches = async () => {
         console.log(err)
     }
 }
-
-getBranches()
-    .then(result => console.log(result))
-    .catch(err => console.log(err))

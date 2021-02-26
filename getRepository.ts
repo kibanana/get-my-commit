@@ -1,7 +1,7 @@
 import axios from 'axios'
 import config from './config'
 
-const getRepositories = async () => {
+export default async () => {
     try {
         const response = await axios.get(
             `${config.GITHUB_API_URL}/user/repos`,
@@ -19,7 +19,3 @@ const getRepositories = async () => {
         console.log(err)
     }
 }
-
-getRepositories()
-    .then(result => console.log(result))
-    .catch(err => console.log(err))
