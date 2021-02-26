@@ -1,10 +1,10 @@
 import axios from 'axios'
 import config from './config'
 
-const getRepositories = async () => {
+const getOrganizations = async () => {
     try {
         const response = await axios.get(
-            `${config.GITHUB_API_URL}/user/repos`,
+            `${config.GITHUB_API_URL}/user/orgs`,
             {
                 headers: {
                     Authorization: `token ${config.PERSONAL_ACCESS_TOKEN}`
@@ -20,6 +20,6 @@ const getRepositories = async () => {
     }
 }
 
-getRepositories()
+getOrganizations()
     .then(result => console.log(result))
     .catch(err => console.log(err))
