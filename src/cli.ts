@@ -73,7 +73,8 @@ export default async () => {
                 type: 'checkbox',
                 name: 'checkedRepositories',
                 message: 'Select the repositories where you want to get the commits',
-                choices: repositories.map((repo: Repository) => repo.name)
+                choices: repositories.map((repo: Repository) => repo.name),
+                pageSize: 15
             }
         ])
     if (Array.isArray(checkedRepositories) && checkedRepositories.length === 0) return null
@@ -95,7 +96,8 @@ export default async () => {
                     type: 'checkbox',
                     name: 'changedRepositories',
                     message: 'Select the repositories where you want to change branch',
-                    choices: checkedRepositories
+                    choices: checkedRepositories,
+                    pageSize: 15
                 }
             ])
         
@@ -112,7 +114,8 @@ export default async () => {
                             type: 'rawlist',
                             name: 'defaultBranch',
                             message: 'Choose one branch that will be the default branch',
-                            choices: branches
+                            choices: branches,
+                            pageSize: 15
                         }
                     ])
 
