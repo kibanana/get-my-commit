@@ -3,6 +3,7 @@ import terminalImage from 'terminal-image'
 import axios from 'axios'
 import * as Github from './lib/github'
 import Repository from './ts/Repository'
+import Commit from './ts/Commit'
 
 export default async () => {
     const { token } = await inquirer
@@ -101,4 +102,12 @@ export default async () => {
             repositoryMap[repo] = defaultBranch
         })
     }
+    
+    const commitMap: { [key: string]: Commit[] } = {}
+    checkedRepositories.forEach(async (repo: string) => {
+        const commits = await Github.getCommit(token, login, repo)
+        if (commits.length > 0) {
+            commitMap[repo] = commits
+        }
+    })
 }
