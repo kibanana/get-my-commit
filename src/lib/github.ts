@@ -42,7 +42,7 @@ export const getBranch = async (token: string, user: string, repo: string) => {
     return result
 }
 
-export const getCommit = async (token: string, user: string, repo: string) => {
+export const getCommit = async (token: string, user: string, repo: string, sha: string) => {
     let result: Commit[] = []
     let i = 0
 
@@ -53,6 +53,7 @@ export const getCommit = async (token: string, user: string, repo: string) => {
                 `${config.GITHUB_API_URL}/repos/${repoUrl}/commits`,
                 {
                     params: {
+                        sha,
                         author: user,
                         per_page: 100,
                         page: i

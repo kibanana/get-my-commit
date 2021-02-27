@@ -38,18 +38,19 @@ export default async () => {
             total_private_repos
         } = user
         let { created_at: createdAt, updated_at: updatedAt } = user
-        createdAt = new Date(createdAt).toISOString().substr(0, 10)
-        updatedAt = new Date(updatedAt).toISOString().substr(0, 10)
+        createdAt = new Date(createdAt).toISOString().substr(0, 10).replace(/-/g, '.')
+        updatedAt = new Date(updatedAt).toISOString().substr(0, 10).replace(/-/g, '.')
 
         const responseImage = (await axios.get(avatar_url, { responseType: 'arraybuffer' }))
         const image = Buffer.from(responseImage.data, 'binary')
 
         console.log(await terminalImage.buffer(image, { width: '50%', height: '50%' }))
         console.log(chalk.magenta(`[${url}]`))
-        console.log(chalk.magenta(`${login} (${name})`))
-        console.log(chalk.magenta(`${bio}`))
-        console.log(chalk.magenta(`${public_repos} public repos & ${total_private_repos} private_repos`))
-        console.log(chalk.magenta(`Created at ${createdAt} & Updated at ${updatedAt}`))
+        console.log(chalk.magenta(`${name} (${login})`))
+        console.log(chalk.magenta(`Bio: ${bio}`))
+        console.log(chalk.magenta(`Repositories: ${public_repos} public repos & ${total_private_repos} private repos`))
+        console.log(chalk.magenta(`Updated at ${updatedAt}`))
+        console.log(chalk.magenta(`Created at ${createdAt}`))
 
         const { isCorrectUser } = await inquirer.prompt([
             {
@@ -145,7 +146,7 @@ export default async () => {
 
             let commits
             try {
-                commits = await Github.getCommit(token, login, repo)
+                commits = await Github.getCommit(token, login, repo, repositoryBranchMap[repo] || 'master')
             } catch (err) {}
 
             if (Array.isArray(commits) && commits.length > 0) {
