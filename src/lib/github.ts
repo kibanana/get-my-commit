@@ -26,14 +26,12 @@ export const getBranch = async (token: string, repo: string) => {
 
             if (response && response.status === 200 && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 result = [...result, ...response.data]
-            } else if (response.status === 401) {
-                return null
             } else {
                 break
             }
         } catch (err) {
             console.log(err)
-            break
+            return err.response.status
         }
         i++
     }
@@ -64,14 +62,12 @@ export const getCommit = async (token: string, repo: string, sha: string) => {
 
             if (response && response.status === 200 && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 result = [...result, ...response.data]
-            } else if (response.status === 401) {
-                return null
             } else {
                 break
             }
         } catch (err) {
             console.log(err)
-            break
+            return err.response.status
         }
         i++
     }
@@ -92,13 +88,11 @@ export const getProfile = async (token: string) => {
     
         if (response && response.status === 200 && response.data) {
             return response.data
-        } else if (response.status === 401) {
-            return null
-        } else {
-            return null
         }
+        return null
     } catch (err) {
         console.log(err)
+        return err.response.status
     }
 }
 
@@ -127,14 +121,12 @@ export const getRepository = async (token: string) => {
 
             if (response && response.status === 200 && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 result = [...result, ...response.data]
-            } else if (response.status === 401) {
-                return null
             } else {
                 break
             }
         } catch (err) {
             console.log(err)
-            break
+            return err.response.status
         }
         i++
     }

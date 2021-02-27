@@ -30,7 +30,7 @@ export default async (): Promise<boolean> => {
             return false
         }
 
-        let user: null | User = null
+        let user: null | User | number = null
         try {
             user = await Github.getProfile(token)
         } catch (err) {
@@ -38,7 +38,12 @@ export default async (): Promise<boolean> => {
             return false
         }
 
-        if (!user) {
+        if (typeof user === 'number') {
+            if (user === 401) {
+                console.log(chalk.red.bold(errorMessage.API.UNAUTHORIZED))
+            }
+            return false
+        } else if (!user) {
             console.log(chalk.red.bold(errorMessage.API.EMPTY_USER))
             return false
         }
@@ -80,7 +85,7 @@ export default async (): Promise<boolean> => {
             return false
         }
 
-        let repositories: null | Repository[] = null
+        let repositories: null | number | Repository[] = null
         while (true) {
             let i = 0
             const printTextId = setInterval(() => {
@@ -96,8 +101,13 @@ export default async (): Promise<boolean> => {
                 console.log(chalk.red.bold(errorMessage.API.ERROR_REPOSITORIES))
                 return false
             }
-    
-            if (!Array.isArray(repositories) || repositories.length === 0) {
+
+            if (typeof repositories === 'number') {
+                if (repositories === 401) {
+                    console.log(chalk.red.bold(errorMessage.API.UNAUTHORIZED))
+                }
+                return false
+            } else if (!Array.isArray(repositories) || repositories.length === 0) {
                 console.log(chalk.red.bold(errorMessage.API.EMPTY_REPOSITORIES))
                 return false
             }
@@ -162,7 +172,7 @@ export default async (): Promise<boolean> => {
                 for (let i = 0; i < changedRepositories!.length; i++) {
                     const repo = changedRepositories![i]
     
-                    let branches: null | Branch[] = null
+                    let branches: null | number | Branch[] = null
                     while (true) {
                         let i = 0
                         const printTextId = setInterval(() => {
@@ -186,7 +196,12 @@ export default async (): Promise<boolean> => {
                         break
                     }
 
-                    if (!Array.isArray(branches) || branches.length === 0) {
+                    if (typeof branches === 'number') {
+                        if (branches === 401) {
+                            console.log(chalk.red.bold(errorMessage.API.UNAUTHORIZED))
+                        } 
+                        return false
+                    } else if (!Array.isArray(branches) || branches.length === 0) {
                         console.log(chalk.red.bold(errorMessage.API.EMPTY_BRANCHES))
                         return false
                     }
@@ -208,7 +223,7 @@ export default async (): Promise<boolean> => {
         }
 
         const commitMap: { [key: string]: Commit[] } = {}
-        let commits: null | Commit[] = null
+        let commits: null | number | Commit[] = null
         for (let i = 0; i < checkedRepositories!.length; i++) {
             const repo = checkedRepositories![i]
 
@@ -232,7 +247,12 @@ export default async (): Promise<boolean> => {
                 break
             }
 
-            if (Array.isArray(commits) && commits.length > 0) {
+            if (typeof commits === 'number') {
+                if (commits === 401) {
+                    console.log(chalk.red.bold(errorMessage.API.UNAUTHORIZED))
+                } 
+                return false
+            } else if (Array.isArray(commits) && commits.length > 0) {
                 commits = commits.filter((commit) => (commit.author && commit.author.id === userId) || (commit.committer && commit.committer.id === userId))
                 console.log(chalk.bgMagenta(`Got the ${commits.length} commits from <${repo}> repository(${repositoryBranchMap[repo] || repositoryMap[repo].default_branch} branch)!`))
                 commitMap[repo] = commits
