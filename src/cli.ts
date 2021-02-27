@@ -206,18 +206,24 @@ export default async (): Promise<boolean> => {
                         return false
                     }
 
-                    const { branch } = await inquirer.prompt([
-                        {
-                            type: 'rawlist',
-                            name: 'branch',
-                            message: `Choose one branch that will be the default branch (${repo})`,
-                            choices: [...branches, 'Quit choosing for this repository', 'Quit choosing for all repository'],
-                            pageSize: 15
-                        }
-                    ])
+                    if (branches.length > 1) {
+                        const { branch } = await inquirer.prompt([
+                            {
+                                type: 'rawlist',
+                                name: 'branch',
+                                message: `Choose one branch that will be the default branch (${repo})`,
+                                choices: [...branches, 'Quit choosing for this repository', 'Quit choosing for all repository'],
+                                pageSize: 15
+                            }
+                        ])
 
-                    if (branch !== 'Quit choosing for this repository' || branch !== 'Quit choosing for all repository') repositoryBranchMap[repo] = branch
-                    else if (branch === 'Quit choosing for all repository') break
+                        if (branch !== 'Quit choosing for this repository' || branch !== 'Quit choosing for all repository') repositoryBranchMap[repo] = branch
+                        else if (branch === 'Quit choosing for all repository') break
+
+                        repositoryBranchMap[repo] = branch
+                    } else {
+                        console.log(chalk.bgMagenta(`>>> There is only one branch in <${repo}> repository`))
+                    }
                 }
             }
         }
