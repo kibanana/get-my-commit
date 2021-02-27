@@ -2,13 +2,29 @@ export default interface Commit {
     sha: string,
     node_id: string,
     commit: {
-        author: [Object],
-        committer: [Object],
+        author: {
+            name: string,
+            email: string,
+            date: string
+        },
+        committer: {
+            name: string,
+            email: string,
+            date: string
+        },
         message: string,
-        tree: [Object],
+        tree: {
+            sha: string,
+            url: string
+        },
         url: string,
-        comment_count: 0,
-        verification: [Object]
+        comment_count: number,
+        verification: {
+            verified: boolean,
+            reason: string,
+            signature: null | any,
+            payload: null | any
+        }
     },
     url: string,
     html_url: string,

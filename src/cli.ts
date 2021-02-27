@@ -86,8 +86,7 @@ export default async () => {
                 }
             ])).checkedRepositories
 
-            if (Array.isArray(checkedRepositories) && checkedRepositories.length === 0) continue
-            break
+            if (Array.isArray(checkedRepositories) && checkedRepositories.length !== 0) break
         }
 
         const { isNotFixed } =  await inquirer.prompt([
@@ -129,7 +128,7 @@ export default async () => {
                         {
                             type: 'rawlist',
                             name: 'defaultBranch',
-                            message: 'Choose one branch that will be the default branch',
+                            message: `Choose one branch that will be the default branch(${repo})`,
                             choices: branches,
                             pageSize: 15
                         }
@@ -141,10 +140,11 @@ export default async () => {
         }
 
         const commitMap: { [key: string]: Commit[] } = {}
+        let commits
         for (let i = 0; i < checkedRepositories.length; i++) {
+            commits = null
             const repo = checkedRepositories[i]
 
-            let commits
             try {
                 commits = await Github.getCommit(token, login, repo, repositoryBranchMap[repo] || 'master')
             } catch (err) {}
@@ -152,9 +152,8 @@ export default async () => {
             if (Array.isArray(commits) && commits.length > 0) {
                 console.log(chalk.bgMagenta(`Got the ${commits.length} commits from <${repo}> repository!`))
                 commitMap[repo] = commits
-            }
-            else {
-                return null
+            } else if (Array.isArray(commits) && commits.length === 0) {
+                console.log(chalk.bgMagenta(`Got nothing(0 commit) from <${repo}> repository!`))
             }
         }
 
@@ -169,10 +168,11 @@ export default async () => {
 
         let data = ''
 
+        const existedRepositories: string[] = Object.keys(commitMap)
         switch (fileType[selectedFileType]) {
             case '.md':
-                for (let i = 0; i < checkedRepositories.length; i++) {
-                    const repo = checkedRepositories[i]
+                for (let i = 0; i < existedRepositories.length; i++) {
+                    const repo = existedRepositories[i]
 
                     data += `# ${repo}(branch: ${repositoryBranchMap[repo] || 'master'})${os.EOL}`
                     const commits = commitMap[repo]
@@ -190,21 +190,37 @@ export default async () => {
                 data += `  <head>${os.EOL}    <title>Get my commit</title>${os.EOL}  </head>${os.EOL}`
                 data += `  <body></body>`
                 data += '</html>'
+
+                let temp = ''
                 let subData = ''
-                for (let i = 0; i < checkedRepositories.length; i++) {
-                    const repo = checkedRepositories[i]
-                    subData += `    <h1>${repo}(branch: ${repositoryBranchMap[repo] || 'master'})</h1>${os.EOL}`
+                let subDataWithAdditionalData = ''
+                for (let i = 0; i < existedRepositories.length; i++) {
+                    const repo = existedRepositories[i]
+                    
+                    subData = `    <h1>${repo}(branch: ${repositoryBranchMap[repo] || 'master'})</h1>${os.EOL}`
+
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
                         subData += `    <ul>${os.EOL}`
+                        subDataWithAdditionalData += `    <ul>${os.EOL}`
                         for (let j = 0; j < commits.length; j++) {
                             const commit = commits[j]
-                            subData += `      <li>${commit.commit.message}</li>${os.EOL}`
+                            const { commit: { message, author: { date: authorDate }, committer: { date: committerDate } }, html_url: htmlUrl } = commit
+                            let commitDate = authorDate ? authorDate : committerDate
+                            commitDate = new Date(commitDate).toISOString()
+                            commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
+                            subData += `      <li>${message}</li>${os.EOL}`
+                            subDataWithAdditionalData += `      <li>${message} <i>(${commitDate}, <a link href=${htmlUrl}>link</a>)</li><i>${os.EOL}`
                         }
                         subData += `    </ul>${os.EOL}`
+                        subDataWithAdditionalData += `    </ul>${os.EOL}`
                     }
+
+                    temp += `${subData}<hr>${os.EOL}${subDataWithAdditionalData}`
+                    subData = ''
+                    subDataWithAdditionalData = ''
                 }
-                data = data.replace('<body></body>', `<body>${os.EOL}${subData}</body>${os.EOL}`)
+                data = data.replace('<body></body>', `<body>${os.EOL}${temp}</body>${os.EOL}`)
                 break
         }
 
