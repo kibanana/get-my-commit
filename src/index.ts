@@ -11,7 +11,12 @@ const main = async () => {
     console.log()
 
     setTimeout(async () => {
-        await mainProcess()
+        const result = await mainProcess()
+        if (result) {
+            console.log(chalk.bgMagenta('>>> End successfully <<<'))
+        } else {
+            console.log(chalk.bgMagenta('>>> End with a error <<<'))
+        }
     }, 500)
 }
 
