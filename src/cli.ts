@@ -77,13 +77,66 @@ export default async () => {
                     type: 'checkbox',
                     name: 'checkedRepositories',
                     message: 'Select the repositories where you want to get the commits',
-                    choices: repositories.map((repo: Repository) => repo.name),
+                    choices: repositories.map((repo: Repository) => {
+                        if (repo.full_name.includes(login)) return repo.name
+                        else return repo.full_name
+                    }),
                     pageSize: 15
                 }
             ])).checkedRepositories
 
             if (Array.isArray(checkedRepositories) && checkedRepositories.length === 0) continue
             break
+        }
+
+        const { isNotFixed } =  await inquirer.prompt([
+            {
+                type: 'confirm',
+                name: 'isNotFixed',
+                message: 'The default branch is master. Would you like to change to another branch?',
+            }
+        ])
+
+        const repositoryBranchMap: { [key: string]: string } = {}
+        if (isNotFixed && Array.isArray(checkedRepositories) && checkedRepositories.length > 0) {
+            let changedRepositories
+            while (true) {
+                changedRepositories = (await inquirer.prompt([
+                    {
+                        type: 'checkbox',
+                        name: 'changedRepositories',
+                        message: 'Select the repositories where you want to change branch',
+                        choices: checkedRepositories,
+                        pageSize: 15
+                    }
+                ])).changedRepositories
+
+                if (Array.isArray(changedRepositories) && changedRepositories.length === 0) continue
+                break
+            }
+
+            for (let i = 0; i < changedRepositories.length; i++) {
+                const repo = changedRepositories[i]
+
+                let branches
+                try {
+                    branches = await Github.getBranch(token, login, repo)
+                } catch (err) {}
+
+                if (branches) {
+                    const { defaultBranch } = await inquirer.prompt([
+                        {
+                            type: 'rawlist',
+                            name: 'defaultBranch',
+                            message: 'Choose one branch that will be the default branch',
+                            choices: branches,
+                            pageSize: 15
+                        }
+                    ])
+
+                    repositoryBranchMap[repo] = defaultBranch
+                }
+            }
         }
 
         const commitMap: { [key: string]: Commit[] } = {}
@@ -97,7 +150,6 @@ export default async () => {
 
             if (Array.isArray(commits) && commits.length > 0) {
                 console.log(chalk.bgMagenta(`Got the ${commits.length} commits from <${repo}> repository!`))
-                console.log(chalk.bgMagenta(JSON.stringify(commits, null, 4)))
                 commitMap[repo] = commits
             }
             else {
@@ -121,7 +173,7 @@ export default async () => {
                 for (let i = 0; i < checkedRepositories.length; i++) {
                     const repo = checkedRepositories[i]
 
-                    data += `# ${repo}${os.EOL}`
+                    data += `# ${repo}(branch: ${repositoryBranchMap[repo] || 'master'})${os.EOL}`
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
                         for (let j = 0; j < commits.length; j++) {
@@ -140,7 +192,7 @@ export default async () => {
                 let subData = ''
                 for (let i = 0; i < checkedRepositories.length; i++) {
                     const repo = checkedRepositories[i]
-                    subData += `    <h1>${repo}</h1>${os.EOL}`
+                    subData += `    <h1>${repo}(branch: ${repositoryBranchMap[repo] || 'master'})</h1>${os.EOL}`
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
                         subData += `    <ul>${os.EOL}`
