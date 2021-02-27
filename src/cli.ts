@@ -3,8 +3,9 @@ import terminalImage from 'terminal-image'
 import chalk from 'chalk'
 import axios from 'axios'
 import os from 'os'
+import fs from 'fs'
+import * as util from 'util'
 import * as Github from './lib/github'
-import * as fsAsync from './lib/fsAsync'
 import fileType from './lib/fileType'
 import dateGroupType from './lib/dateGroupType'
 import Commit from './ts/Commit'
@@ -327,7 +328,7 @@ export default async () => {
                 break
         }
 
-        await fsAsync.writeFileSync(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
+        await util.promisify(fs.writeFile)(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
 
         console.log(chalk.bgMagenta(`get_my_commit${fileType[selectedFileType]} file was saved successfully`))
     } catch (err) {
