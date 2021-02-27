@@ -135,12 +135,13 @@ export default async () => {
                                 type: 'rawlist',
                                 name: 'branch',
                                 message: `Choose one branch that will be the default branch (${repo})`,
-                                choices: [...branches, 'Quit'],
+                                choices: [...branches, 'Quit choosing for this repository', 'Quit choosing for all repository'],
                                 pageSize: 15
                             }
                         ])
 
-                        if (branch !== 'Quit') repositoryBranchMap[repo] = branch
+                        if (branch !== 'Quit choosing for this repository' || branch !== 'Quit choosing for all repository') repositoryBranchMap[repo] = branch
+                        else if (branch === 'Quit choosing for all repository') break
                     }
                 }
             }
@@ -184,20 +185,27 @@ export default async () => {
                 for (let i = 0; i < existedRepositories.length; i++) {
                     const repo = existedRepositories[i]
 
-                    data += `# ${repo}(branch: ${repositoryBranchMap[repo] || repositoryMap[repo].default_branch}, [link](${repositoryMap[repo].html_url}))${os.EOL}`
+                    data += `# ${repo}(branch: ${repositoryBranchMap[repo] || repositoryMap[repo].default_branch}, [link](${repositoryMap[repo].html_url}))${os.EOL}${os.EOL}`
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
                         for (let j = 0; j < commits.length; j++) {
                             const commit = commits[j]
-                            const { commit: { message, author: { date: authorDate }, committer: { date: committerDate } }, html_url: htmlUrl } = commit
+
+                            const { commit: { author: { date: authorDate }, committer: { date: committerDate } }, html_url: htmlUrl } = commit
+                            
+                            let { commit: { message } } = commit
+                            message = message.replace(/\n/g, ' ')
+
                             let commitDate = authorDate ? authorDate : committerDate
                             commitDate = new Date(commitDate).toISOString()
                             commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
+
                             subData += `- ${message}${os.EOL}`
+                            console.log(message)
                             subDataWithAdditionalData += `- ${message} *(${commitDate}, [link](${htmlUrl}))*${os.EOL}${os.EOL}`
                         }
                     }
-                    data += `${subData}<hr>${os.EOL}${os.EOL}${subDataWithAdditionalData}${os.EOL}`
+                    data += `${subData}${os.EOL}<hr>${os.EOL}${os.EOL}${subDataWithAdditionalData}`
                     subData = ''
                     subDataWithAdditionalData = ''
                 }
@@ -221,10 +229,16 @@ export default async () => {
                         subDataWithAdditionalData += `    <ul>${os.EOL}`
                         for (let j = 0; j < commits.length; j++) {
                             const commit = commits[j]
-                            const { commit: { message, author: { date: authorDate }, committer: { date: committerDate } }, html_url: htmlUrl } = commit
+
+                            const { commit: { author: { date: authorDate }, committer: { date: committerDate } }, html_url: htmlUrl } = commit
+                            
+                            let { commit: { message } } = commit
+                            message = message.replace(/\n/g, ' ')
+
                             let commitDate = authorDate ? authorDate : committerDate
                             commitDate = new Date(commitDate).toISOString()
                             commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
+                            
                             subData += `      <li>${message}</li>${os.EOL}`
                             subDataWithAdditionalData += `      <li>${message} <i> (${commitDate}, <a link href=${htmlUrl}>link</a>)</li><i>${os.EOL}`
                         }
