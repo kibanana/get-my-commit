@@ -6,7 +6,7 @@ import Repository from '../ts/Repository'
 
 export const getBranch = async (token: string, user: string, repo: string) => {
     let result: Branch[] = []
-    let i = 0
+    let i = 1
 
     while (true) {
         try {
@@ -24,7 +24,7 @@ export const getBranch = async (token: string, user: string, repo: string) => {
                     }
                 }
             )
-        
+
             if (response && response.status === 200 && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 result = [...result, ...response.data]
             } else if (response.status === 401) {
@@ -44,7 +44,7 @@ export const getBranch = async (token: string, user: string, repo: string) => {
 
 export const getCommit = async (token: string, user: string, repo: string, sha: string) => {
     let result: Commit[] = []
-    let i = 0
+    let i = 1
 
     while (true) {
         try {
@@ -63,7 +63,7 @@ export const getCommit = async (token: string, user: string, repo: string, sha: 
                     }
                 }
             )
-        
+
             if (response && response.status === 200 && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 result = [...result, ...response.data]
             } else if (response.status === 401) {
@@ -106,7 +106,7 @@ export const getProfile = async (token: string) => {
 
 export const getRepository = async (token: string) => {
     let result: Repository[] = []
-    let i = 0
+    let i = 1
 
     while (true) {
         try {
@@ -126,7 +126,7 @@ export const getRepository = async (token: string) => {
                     }
                 }
             )
-    
+
             if (response && response.status === 200 && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 result = [...result, ...response.data]
             } else if (response.status === 401) {
