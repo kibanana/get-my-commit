@@ -64,11 +64,26 @@ export default async () => {
         if (!isCorrectUser) return null
 
         let repositories
-        try {
-            repositories = await Github.getRepository(token)
-        } catch (err) {}
+        while (true) {
+            let i = 0
+            const printTextId = setInterval(() => {
+                process.stdout.cursorTo(0)
+                i = (i + 1) % 4
+                const dots = new Array(i + 1).join('.')
+                process.stdout.write(`Getting repositories${dots}`)
+            }, 300)
+    
+            try {
+                repositories = await Github.getRepository(token)
+            } catch (err) {}
+    
+            if (!repositories) return null
 
-        if (!repositories) return null
+            clearInterval(printTextId)
+            process.stdout.cursorTo(0)
+            process.stdout.clearLine(1)
+            break
+        }
 
         console.log(chalk.bgMagenta(`Got the ${repositories.length} repositories!`))
 
@@ -120,15 +135,31 @@ export default async () => {
                 if (!Array.isArray(changedRepositories) || changedRepositories.length !== 0) break
             }
 
-            if (!changedRepositories.includes('Quit')) {
+            if (!changedRepositories.includes('Quit')) {   
                 for (let i = 0; i < changedRepositories.length; i++) {
                     const repo = changedRepositories[i]
     
                     let branches
-                    try {
-                        branches = await Github.getBranch(token, repositoryMap[repo].full_name)
-                    } catch (err) {}
-    
+                    while (true) {
+                        let i = 0
+                        const printTextId = setInterval(() => {
+                            process.stdout.cursorTo(0)
+                            i = (i + 1) % 4
+                            const dots = new Array(i + 1).join('.')
+                            process.stdout.write(`Getting branches${dots}`)
+                        }, 300)
+                
+                     
+                        try {
+                            branches = await Github.getBranch(token, repositoryMap[repo].full_name)
+                        } catch (err) {}
+        
+                        clearInterval(printTextId)
+                        process.stdout.cursorTo(0)
+                        process.stdout.clearLine(1)
+                        break
+                    }
+
                     if (branches) {
                         const { branch } = await inquirer.prompt([
                             {
@@ -153,12 +184,28 @@ export default async () => {
             commits = null
             const repo = checkedRepositories[i]
 
-            try {
-                commits = await Github.getCommit(token, repositoryMap[repo].full_name, repositoryBranchMap[repo] || repositoryMap[repo].default_branch)
-            } catch (err) {}
+            while (true) {
+                let i = 0
+                const printTextId = setInterval(() => {
+                    process.stdout.cursorTo(0)
+                    i = (i + 1) % 4
+                    const dots = new Array(i + 1).join('.')
+                    process.stdout.write(`Getting commits${dots}`)
+                }, 300)
+        
+             
+                try {
+                    commits = await Github.getCommit(token, repositoryMap[repo].full_name, repositoryBranchMap[repo] || repositoryMap[repo].default_branch)
+                } catch (err) {}
+
+                clearInterval(printTextId)
+                process.stdout.cursorTo(0)
+                process.stdout.clearLine(1)
+                break
+            }
 
             if (Array.isArray(commits) && commits.length > 0) {
-                commits = commits.filter((commit) => commit.author.id === userId || commit.committer.id === userId)
+                commits = commits.filter((commit) => (commit.author && commit.author.id === userId) || (commit.committer && commit.committer.id === userId))
                 console.log(chalk.bgMagenta(`Got the ${commits.length} commits from <${repo}> repository(${repositoryBranchMap[repo] || repositoryMap[repo].default_branch} branch)!`))
                 commitMap[repo] = commits
             } else if (Array.isArray(commits) && commits.length === 0) {
@@ -201,11 +248,10 @@ export default async () => {
                             commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
 
                             subData += `- ${message}${os.EOL}`
-                            console.log(message)
                             subDataWithAdditionalData += `- ${message} *(${commitDate}, [link](${htmlUrl}))*${os.EOL}${os.EOL}`
                         }
                     }
-                    data += `${subData}${os.EOL}<hr>${os.EOL}${os.EOL}${subDataWithAdditionalData}`
+                    data += `${subData}${os.EOL}---${os.EOL}${os.EOL}${subDataWithAdditionalData}`
                     subData = ''
                     subDataWithAdditionalData = ''
                 }
