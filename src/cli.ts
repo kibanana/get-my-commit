@@ -155,7 +155,7 @@ export default async () => {
         }
     ])
     
-    let data = '<!doctype html><html><head><title>Get my commit</title></head><body></body></html>'
+    let data = ''
 
     switch (fileType[selectedFileType]) {
         case '.md':
@@ -173,21 +173,26 @@ export default async () => {
             }
             break
         case '.html':
+            data += `<!doctype html>${os.EOL}`
+            data += `<html>${os.EOL}`
+            data += `  <head>${os.EOL}    <title>Get my commit</title>${os.EOL}  </head>${os.EOL}`
+            data += `  <body></body>`
+            data += '</html>'
             let subData = ''
             for (let i = 0; i < checkedRepositories.length; i++) {
                 const repo = checkedRepositories[i]
-                subData += `<h1>${repo} (branch: ${repositoryMap[repo] || 'master'})</h1>`
+                subData += `<h1>${repo} (branch: ${repositoryMap[repo] || 'master'})</h1>${os.EOL}`
                 const commits = commitMap[repo]
                 if (Array.isArray(commits) && commits.length > 0) {
-                    subData += `<ul>`
+                    subData += `<ul>${os.EOL}`
                     for (let j = 0; j < commits.length; j++) {
                         const commit = commits[j]
-                        subData += `<li>${commit.commit.message}</li>`
+                        subData += `  <li>${commit.commit.message}</li>${os.EOL}`
                     }
-                    subData += `</ul>`
+                    subData += `</ul>${os.EOL}`
                 }
             }
-            data = data.replace('<body></body>', `<body>${subData}</body>`)
+            data = data.replace('<body></body>', `<body>${os.EOL}${subData}</body>`)
             break
     }
 
