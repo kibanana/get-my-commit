@@ -54,7 +54,6 @@ export const getCommit = async (token: string, user: string, repo: string, sha: 
                 {
                     params: {
                         sha,
-                        author: user,
                         per_page: 100,
                         page: i
                     },

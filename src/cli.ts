@@ -150,6 +150,7 @@ export default async () => {
             } catch (err) {}
 
             if (Array.isArray(commits) && commits.length > 0) {
+                commits = commits.filter((commit) => commit.author.login === login || commit.committer.login === login)
                 console.log(chalk.bgMagenta(`Got the ${commits.length} commits from <${repo}> repository!`))
                 commitMap[repo] = commits
             } else if (Array.isArray(commits) && commits.length === 0) {
