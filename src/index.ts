@@ -13,9 +13,8 @@ const main = async () => {
     console.log()
 
     setTimeout(async () => {
-        clear()
         await mainProcess()
-    }, 1000)
+    }, 500)
 }
 
-main().catch(err => console.log(err))
+main().catch(err => chalk.red.bold(console.error(err)))
