@@ -49,14 +49,13 @@ export default async () => {
     console.log(chalk.magenta(`${public_repos} public repos & ${total_private_repos} private_repos`))
     console.log(chalk.magenta(`Created at ${createdAt} & Updated at ${updatedAt}`))
 
-    const { isCorrectUser } = await inquirer
-        .prompt([
-            {
-                type: 'confirm',
-                name: 'isCorrectUser',
-                message: 'Is this profile yours?'
-            }
-        ])
+    const { isCorrectUser } = await inquirer.prompt([
+        {
+            type: 'confirm',
+            name: 'isCorrectUser',
+            message: 'Is this profile yours?'
+        }
+    ])
     
     if (!isCorrectUser) return null
 
@@ -67,8 +66,9 @@ export default async () => {
 
     if (!repositories) return null
 
-    const { checkedRepositories } = await inquirer
-        .prompt([
+    let checkedRepositories
+    while (true) {
+        checkedRepositories = (await inquirer.prompt([
             {
                 type: 'checkbox',
                 name: 'checkedRepositories',
@@ -76,22 +76,25 @@ export default async () => {
                 choices: repositories.map((repo: Repository) => repo.name),
                 pageSize: 15
             }
-        ])
-    if (Array.isArray(checkedRepositories) && checkedRepositories.length === 0) return null
+        ])).checkedRepositories
+
+        if (Array.isArray(checkedRepositories) && checkedRepositories.length === 0) continue
+        break
+    }
     
-    const { isNotFixed } =  await inquirer
-        .prompt([
-            {
-                type: 'confirm',
-                name: 'isNotFixed',
-                message: 'The default branch is master. Would you like to change to another branch?',
-            }
-        ])
+    const { isNotFixed } =  await inquirer.prompt([
+        {
+            type: 'confirm',
+            name: 'isNotFixed',
+            message: 'The default branch is master. Would you like to change to another branch?',
+        }
+    ])
     
     const repositoryMap: { [key: string]: string } = {}
     if (isNotFixed && Array.isArray(checkedRepositories) && checkedRepositories.length > 0) {
-        const { changedRepositories } = await inquirer
-            .prompt([
+        let changedRepositories
+        while (true) {
+            changedRepositories = (await inquirer.prompt([
                 {
                     type: 'checkbox',
                     name: 'changedRepositories',
@@ -99,8 +102,12 @@ export default async () => {
                     choices: checkedRepositories,
                     pageSize: 15
                 }
-            ])
-        
+            ])).changedRepositories
+
+            if (Array.isArray(changedRepositories) && changedRepositories.length === 0) continue
+            break
+        }
+
         for (let i = 0; i < changedRepositories.length; i++) {
             const repo = changedRepositories[i]
 
@@ -110,16 +117,15 @@ export default async () => {
             } catch (err) {}
 
             if (branches) {
-                const { defaultBranch } = await inquirer
-                    .prompt([
-                        {
-                            type: 'rawlist',
-                            name: 'defaultBranch',
-                            message: 'Choose one branch that will be the default branch',
-                            choices: branches,
-                            pageSize: 15
-                        }
-                    ])
+                const { defaultBranch } = await inquirer.prompt([
+                    {
+                        type: 'rawlist',
+                        name: 'defaultBranch',
+                        message: 'Choose one branch that will be the default branch',
+                        choices: branches,
+                        pageSize: 15
+                    }
+                ])
 
                 repositoryMap[repo] = defaultBranch
             }
@@ -140,15 +146,14 @@ export default async () => {
         }
     }
 
-    const { selectedFileType } = await inquirer
-        .prompt([
-            {
-                type: 'rawlist',
-                name: 'selectedFileType',
-                message: 'Which file type would you like to extract?',
-                choices: Object.keys(fileType)
-            }
-        ])
+    const { selectedFileType } = await inquirer.prompt([
+        {
+            type: 'rawlist',
+            name: 'selectedFileType',
+            message: 'Which file type would you like to extract?',
+            choices: Object.keys(fileType)
+        }
+    ])
     
     let data = '<!doctype html><html><head><title>Get my commit</title></head><body></body></html>'
 
