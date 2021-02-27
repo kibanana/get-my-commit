@@ -6,6 +6,8 @@ import os from 'os'
 import fs from 'fs'
 import * as util from 'util'
 import * as Github from './lib/github'
+import formattingDate from './lib/formattingDate'
+import errorMessage from './lib/errorMessage'
 import fileType from './lib/fileType'
 import dateGroupType from './lib/dateGroupType'
 import Commit from './ts/Commit'
@@ -21,12 +23,23 @@ export default async () => {
             }
         ])
 
+        if (!token) {
+            console.log(chalk.red.bold(errorMessage.ERROR_EMPTY_TOKEN))
+            return
+        }
+
         let user
         try {
             user = await Github.getProfile(token)
-        } catch (err) {}
+        } catch (err) {
+            console.log(chalk.red.bold(errorMessage.API.ERROR_USER))
+            return
+        }
 
-        if (!user) return null
+        if (!user) {
+            console.log(chalk.red.bold(errorMessage.API.EMPTY_USER))
+            return
+        }
 
         console.log(chalk.bgMagenta('Got a profile!'))
 
@@ -41,8 +54,8 @@ export default async () => {
             total_private_repos
         } = user
         let { created_at: createdAt, updated_at: updatedAt } = user
-        createdAt = new Date(createdAt).toISOString().substr(0, 10).replace(/-/g, '.')
-        updatedAt = new Date(updatedAt).toISOString().substr(0, 10).replace(/-/g, '.')
+        createdAt = formattingDate(createdAt)
+        updatedAt = formattingDate(updatedAt)
 
         const responseImage = (await axios.get(avatar_url, { responseType: 'arraybuffer' }))
         const image = Buffer.from(responseImage.data, 'binary')
@@ -256,8 +269,8 @@ export default async () => {
                             message = message.replace(/\n/g, ' ')
 
                             let commitDate = authorDate ? authorDate : committerDate
-                            commitDate = new Date(commitDate).toISOString()
-                            commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
+                            commitDate = formattingDate(commitDate)
+                            commitDate = `${commitDate} ${commitDate.substr(11, 8)}`
                             
                             if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[selecteddateGroupType])) {
                                 dateGroup = commitDate.substr(0, dateGroupType[selecteddateGroupType])
@@ -302,8 +315,8 @@ export default async () => {
                             message = message.replace(/\n/g, ' ')
 
                             let commitDate = authorDate ? authorDate : committerDate
-                            commitDate = new Date(commitDate).toISOString()
-                            commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
+                            commitDate = formattingDate(commitDate)
+                            commitDate = `${commitDate} ${commitDate.substr(11, 8)}`
 
                             if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[selecteddateGroupType])) {
                                 dateGroup = commitDate.substr(0, dateGroupType[selecteddateGroupType])
