@@ -92,7 +92,7 @@ export default async () => {
                 }
             ])).checkedRepositories
 
-            if (Array.isArray(checkedRepositories) && checkedRepositories.length !== 0) break
+            if (!Array.isArray(checkedRepositories) || checkedRepositories.length !== 0) break
         }
 
         const { isNotFixed } =  await inquirer.prompt([
@@ -112,35 +112,36 @@ export default async () => {
                         type: 'checkbox',
                         name: 'changedRepositories',
                         message: 'Select the repositories where you want to change branch',
-                        choices: checkedRepositories,
+                        choices: [...checkedRepositories, 'Quit'],
                         pageSize: 15
                     }
                 ])).changedRepositories
 
-                if (Array.isArray(changedRepositories) && changedRepositories.length === 0) continue
-                break
+                if (!Array.isArray(changedRepositories) || changedRepositories.length !== 0) break
             }
 
-            for (let i = 0; i < changedRepositories.length; i++) {
-                const repo = changedRepositories[i]
+            if (!changedRepositories.includes('Quit')) {
+                for (let i = 0; i < changedRepositories.length; i++) {
+                    const repo = changedRepositories[i]
+    
+                    let branches
+                    try {
+                        branches = await Github.getBranch(token, repositoryMap[repo].full_name)
+                    } catch (err) {}
+    
+                    if (branches) {
+                        const { branch } = await inquirer.prompt([
+                            {
+                                type: 'rawlist',
+                                name: 'branch',
+                                message: `Choose one branch that will be the default branch (${repo})`,
+                                choices: [...branches, 'Quit'],
+                                pageSize: 15
+                            }
+                        ])
 
-                let branches
-                try {
-                    branches = await Github.getBranch(token, repositoryMap[repo].full_name)
-                } catch (err) {}
-
-                if (branches) {
-                    const { branch } = await inquirer.prompt([
-                        {
-                            type: 'rawlist',
-                            name: 'branch',
-                            message: `Choose one branch that will be the default branch (${repo})`,
-                            choices: branches,
-                            pageSize: 15
-                        }
-                    ])
-
-                    repositoryBranchMap[repo] = branch
+                        if (branch !== 'Quit') repositoryBranchMap[repo] = branch
+                    }
                 }
             }
         }
