@@ -4,10 +4,10 @@ import chalk from 'chalk'
 import axios from 'axios'
 import os from 'os'
 import * as Github from './lib/github'
-import Repository from './ts/Repository'
-import Commit from './ts/Commit'
 import * as fsAsync from './lib/fsAsync'
 import fileType from './lib/fileType'
+import Repository from './ts/Repository'
+import Commit from './ts/Commit'
 
 export default async () => {
     try {
@@ -25,6 +25,8 @@ export default async () => {
         } catch (err) {}
 
         if (!user) return null
+
+        console.log(chalk.bgMagenta('Got a profile!'))
 
         const {
             login,
@@ -66,6 +68,8 @@ export default async () => {
 
         if (!repositories) return null
 
+        console.log(chalk.bgMagenta(`Got the ${repositories.length} repositories!`))
+
         let checkedRepositories
         while (true) {
             checkedRepositories = (await inquirer.prompt([
@@ -92,7 +96,12 @@ export default async () => {
             } catch (err) {}
 
             if (Array.isArray(commits) && commits.length > 0) {
+                console.log(chalk.bgMagenta(`Got the ${commits.length} commits from <${repo}> repository!`))
+                console.log(chalk.bgMagenta(JSON.stringify(commits, null, 4)))
                 commitMap[repo] = commits
+            }
+            else {
+                return null
             }
         }
 
@@ -148,7 +157,7 @@ export default async () => {
 
         await fsAsync.writeFileSync(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
 
-        console.log(chalk.magenta(`get_my_commit${fileType[selectedFileType]} file was saved successfully`))
+        console.log(chalk.bgMagenta(`get_my_commit${fileType[selectedFileType]} file was saved successfully`))
     } catch (err) {
         chalk.red.bold(console.error(err))
     }

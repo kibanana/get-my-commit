@@ -1,6 +1,5 @@
 import axios from 'axios'
 import config from '../../config'
-import Branch from '../ts/Branch'
 import Commit from '../ts/Commit'
 import Repository from '../ts/Repository'
 
