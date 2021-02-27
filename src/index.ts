@@ -13,9 +13,9 @@ const main = async () => {
     setTimeout(async () => {
         const result = await mainProcess()
         if (result) {
-            console.log(chalk.bgMagenta('>>> End successfully <<<'))
+            console.log(chalk.bgMagenta('>>> End successfully'))
         } else {
-            console.log(chalk.bgMagenta('>>> End with a error <<<'))
+            console.log(chalk.bgMagenta('>>> End with a error'))
         }
     }, 500)
 }

@@ -26,7 +26,7 @@ export default async (): Promise<boolean> => {
         ])
 
         if (!token) {
-            console.log(chalk.red.bold(errorMessage.ERROR_EMPTY_TOKEN))
+            console.log(chalk.red.bold(`>>> ${errorMessage.ERROR_EMPTY_TOKEN}`))
             return false
         }
 
@@ -34,21 +34,21 @@ export default async (): Promise<boolean> => {
         try {
             user = await Github.getProfile(token)
         } catch (err) {
-            console.log(chalk.red.bold(errorMessage.API.ERROR_USER))
+            console.log(chalk.red.bold(`>>> ${errorMessage.API.ERROR_USER}`))
             return false
         }
 
         if (typeof user === 'number') {
             if (user === 401) {
-                console.log(chalk.red.bold(errorMessage.API.UNAUTHORIZED))
+                console.log(chalk.red.bold(`>>> ${errorMessage.API.UNAUTHORIZED}`))
             }
             return false
         } else if (!user) {
-            console.log(chalk.red.bold(errorMessage.API.EMPTY_USER))
+            console.log(chalk.red.bold(`>>> ${errorMessage.API.EMPTY_USER}`))
             return false
         }
 
-        console.log(chalk.bgMagenta('Got a profile!'))
+        console.log(chalk.bgMagenta('>>> Got a profile!'))
 
         const {
             login,
@@ -98,17 +98,17 @@ export default async (): Promise<boolean> => {
             try {
                 repositories = await Github.getRepository(token)
             } catch (err) {
-                console.log(chalk.red.bold(errorMessage.API.ERROR_REPOSITORIES))
+                console.log(chalk.red.bold(`>>> ${errorMessage.API.ERROR_REPOSITORIES}`))
                 return false
             }
 
             if (typeof repositories === 'number') {
                 if (repositories === 401) {
-                    console.log(chalk.red.bold(errorMessage.API.UNAUTHORIZED))
+                    console.log(chalk.red.bold(`>>> ${errorMessage.API.UNAUTHORIZED}`))
                 }
                 return false
             } else if (!Array.isArray(repositories) || repositories.length === 0) {
-                console.log(chalk.red.bold(errorMessage.API.EMPTY_REPOSITORIES))
+                console.log(chalk.red.bold(`>>> ${errorMessage.API.EMPTY_REPOSITORIES}`))
                 return false
             }
 
@@ -118,7 +118,7 @@ export default async (): Promise<boolean> => {
             break
         }
 
-        console.log(chalk.bgMagenta(`Got the ${repositories.length} repositories!`))
+        console.log(chalk.bgMagenta(`>>> Got the ${repositories.length} repositories!`))
 
         const repositoryMap: { [key: string]: Repository } = {}
         for (let i = 0; i < repositories.length; i++) {
@@ -186,7 +186,7 @@ export default async (): Promise<boolean> => {
                         try {
                             branches = await Github.getBranch(token, repositoryMap[repo].full_name)
                         } catch (err) {
-                            console.log(chalk.red.bold(errorMessage.API.ERROR_BRANCHES))
+                            console.log(chalk.red.bold(`>>> ${errorMessage.API.ERROR_BRANCHES}`))
                             return false
                         }
         
@@ -198,11 +198,11 @@ export default async (): Promise<boolean> => {
 
                     if (typeof branches === 'number') {
                         if (branches === 401) {
-                            console.log(chalk.red.bold(errorMessage.API.UNAUTHORIZED))
+                            console.log(chalk.red.bold(`>>> ${errorMessage.API.UNAUTHORIZED}`))
                         } 
                         return false
                     } else if (!Array.isArray(branches) || branches.length === 0) {
-                        console.log(chalk.red.bold(errorMessage.API.EMPTY_BRANCHES))
+                        console.log(chalk.red.bold(`>>> ${errorMessage.API.EMPTY_BRANCHES}`))
                         return false
                     }
 
@@ -249,15 +249,15 @@ export default async (): Promise<boolean> => {
 
             if (typeof commits === 'number') {
                 if (commits === 401) {
-                    console.log(chalk.red.bold(errorMessage.API.UNAUTHORIZED))
+                    console.log(chalk.red.bold(`>>> ${errorMessage.API.UNAUTHORIZED}`))
                 } 
                 return false
             } else if (Array.isArray(commits) && commits.length > 0) {
                 commits = commits.filter((commit) => (commit.author && commit.author.id === userId) || (commit.committer && commit.committer.id === userId))
-                console.log(chalk.bgMagenta(`Got the ${commits.length} commits from <${repo}> repository(${repositoryBranchMap[repo] || repositoryMap[repo].default_branch} branch)!`))
+                console.log(chalk.bgMagenta(`>>> Got the ${commits.length} commits from <${repo}> repository(${repositoryBranchMap[repo] || repositoryMap[repo].default_branch} branch)!`))
                 commitMap[repo] = commits
             } else if (Array.isArray(commits) && commits.length === 0) {
-                console.log(chalk.bgMagenta(`Got nothing(0 commit) from <${repo}> repository!`))
+                console.log(chalk.bgMagenta(`>>> Got nothing(0 commit) from <${repo}> repository!`))
             }
 
             commits = null
@@ -372,11 +372,11 @@ export default async (): Promise<boolean> => {
         try {
             await util.promisify(fs.writeFile)(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
         } catch (err) {
-            console.log(chalk.red.bold(errorMessage.ERROR_WRITE_FILE))
+            console.log(chalk.red.bold(`>>> ${errorMessage.ERROR_WRITE_FILE}`))
             return false
         }
 
-        console.log(chalk.bgMagenta(`get_my_commit${fileType[selectedFileType]} file was saved successfully`))
+        console.log(chalk.bgMagenta(`>>> get_my_commit${fileType[selectedFileType]} file was saved successfully`))
 
         return true
     } catch (err) {
