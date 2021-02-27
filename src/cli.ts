@@ -11,14 +11,13 @@ import fileType from './lib/fileType'
 
 export default async () => {
     try {
-        const { token } = await inquirer
-            .prompt([
-                {
-                    type: 'input',
-                    name: 'token',
-                    message: 'Enter Personal access token(Github - Settings - Developer settings):'
-                }
-            ])
+        const { token } = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'token',
+                message: 'Enter Personal access token(Github - Settings - Developer settings):'
+            }
+        ])
 
         let user
         try {
@@ -83,56 +82,6 @@ export default async () => {
             break
         }
 
-        const { isNotFixed } =  await inquirer.prompt([
-            {
-                type: 'confirm',
-                name: 'isNotFixed',
-                message: 'The default branch is master. Would you like to change to another branch?',
-            }
-        ])
-
-        const repositoryMap: { [key: string]: string } = {}
-        if (isNotFixed && Array.isArray(checkedRepositories) && checkedRepositories.length > 0) {
-            let changedRepositories
-            while (true) {
-                changedRepositories = (await inquirer.prompt([
-                    {
-                        type: 'checkbox',
-                        name: 'changedRepositories',
-                        message: 'Select the repositories where you want to change branch',
-                        choices: checkedRepositories,
-                        pageSize: 15
-                    }
-                ])).changedRepositories
-
-                if (Array.isArray(changedRepositories) && changedRepositories.length === 0) continue
-                break
-            }
-
-            for (let i = 0; i < changedRepositories.length; i++) {
-                const repo = changedRepositories[i]
-
-                let branches
-                try {
-                    branches = await Github.getBranch(token, login, repo)
-                } catch (err) {}
-
-                if (branches) {
-                    const { defaultBranch } = await inquirer.prompt([
-                        {
-                            type: 'rawlist',
-                            name: 'defaultBranch',
-                            message: 'Choose one branch that will be the default branch',
-                            choices: branches,
-                            pageSize: 15
-                        }
-                    ])
-
-                    repositoryMap[repo] = defaultBranch
-                }
-            }
-        }
-
         const commitMap: { [key: string]: Commit[] } = {}
         for (let i = 0; i < checkedRepositories.length; i++) {
             const repo = checkedRepositories[i]
@@ -163,7 +112,7 @@ export default async () => {
                 for (let i = 0; i < checkedRepositories.length; i++) {
                     const repo = checkedRepositories[i]
 
-                    data += `# ${repo} (branch: ${repositoryMap[repo] || 'master'})${os.EOL}`
+                    data += `# ${repo}${os.EOL}`
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
                         for (let j = 0; j < commits.length; j++) {
@@ -182,18 +131,18 @@ export default async () => {
                 let subData = ''
                 for (let i = 0; i < checkedRepositories.length; i++) {
                     const repo = checkedRepositories[i]
-                    subData += `<h1>${repo} (branch: ${repositoryMap[repo] || 'master'})</h1>${os.EOL}`
+                    subData += `    <h1>${repo}</h1>${os.EOL}`
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
-                        subData += `<ul>${os.EOL}`
+                        subData += `    <ul>${os.EOL}`
                         for (let j = 0; j < commits.length; j++) {
                             const commit = commits[j]
-                            subData += `  <li>${commit.commit.message}</li>${os.EOL}`
+                            subData += `      <li>${commit.commit.message}</li>${os.EOL}`
                         }
-                        subData += `</ul>${os.EOL}`
+                        subData += `    </ul>${os.EOL}`
                     }
                 }
-                data = data.replace('<body></body>', `<body>${os.EOL}${subData}</body>`)
+                data = data.replace('<body></body>', `<body>${os.EOL}${subData}</body>${os.EOL}`)
                 break
         }
 
