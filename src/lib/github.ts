@@ -4,15 +4,14 @@ import Branch from '../ts/Branch'
 import Commit from '../ts/Commit'
 import Repository from '../ts/Repository'
 
-export const getBranch = async (token: string, user: string, repo: string) => {
+export const getBranch = async (token: string, repo: string) => {
     let result: Branch[] = []
     let i = 1
 
     while (true) {
         try {
-            const repoUrl = repo.includes('/') ? repo : `${user}/${repo}`
             const response = await axios.get(
-                `${config.GITHUB_API_URL}/repos/${repoUrl}/branches`,
+                `${config.GITHUB_API_URL}/repos/${repo}/branches`,
                 {
                     params: {
                         per_page: 100,
@@ -42,15 +41,14 @@ export const getBranch = async (token: string, user: string, repo: string) => {
     return result
 }
 
-export const getCommit = async (token: string, user: string, repo: string, sha: string) => {
+export const getCommit = async (token: string, repo: string, sha: string) => {
     let result: Commit[] = []
     let i = 1
 
     while (true) {
         try {
-            const repoUrl = repo.includes('/') ? repo : `${user}/${repo}`
             const response = await axios.get(
-                `${config.GITHUB_API_URL}/repos/${repoUrl}/commits`,
+                `${config.GITHUB_API_URL}/repos/${repo}/commits`,
                 {
                     params: {
                         sha,

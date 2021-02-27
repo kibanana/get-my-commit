@@ -6,8 +6,8 @@ import os from 'os'
 import * as Github from './lib/github'
 import * as fsAsync from './lib/fsAsync'
 import fileType from './lib/fileType'
-import Repository from './ts/Repository'
 import Commit from './ts/Commit'
+import Repository from './ts/Repository'
 
 export default async () => {
     try {
@@ -30,6 +30,7 @@ export default async () => {
 
         const {
             login,
+            id: userId,
             avatar_url,
             url,
             name,
@@ -71,12 +72,12 @@ export default async () => {
 
         console.log(chalk.bgMagenta(`Got the ${repositories.length} repositories!`))
 
-        const repositoryMap: { [key: string]: string } = {}
+        const repositoryMap: { [key: string]: Repository } = {}
         for (let i = 0; i < repositories.length; i++) {
             const repository = repositories[i]
 
-            if (repository.full_name.includes(login)) repositoryMap[repository.name] = repository.default_branch
-            else repositoryMap[repository.full_name] = repository.default_branch
+            if (repository.owner.id === userId) repositoryMap[repository.name] = repository
+            else repositoryMap[repository.full_name] = repository
         }
 
         let checkedRepositories
@@ -125,21 +126,21 @@ export default async () => {
 
                 let branches
                 try {
-                    branches = await Github.getBranch(token, login, repo)
+                    branches = await Github.getBranch(token, repositoryMap[repo].full_name)
                 } catch (err) {}
 
                 if (branches) {
-                    const { defaultBranch } = await inquirer.prompt([
+                    const { branch } = await inquirer.prompt([
                         {
                             type: 'rawlist',
-                            name: 'defaultBranch',
+                            name: 'branch',
                             message: `Choose one branch that will be the default branch(${repo})`,
                             choices: branches,
                             pageSize: 15
                         }
                     ])
 
-                    repositoryBranchMap[repo] = defaultBranch
+                    repositoryBranchMap[repo] = branch
                 }
             }
         }
@@ -151,11 +152,11 @@ export default async () => {
             const repo = checkedRepositories[i]
 
             try {
-                commits = await Github.getCommit(token, login, repo, repositoryBranchMap[repo] || repositoryMap[repo])
+                commits = await Github.getCommit(token, repositoryMap[repo].full_name, repositoryBranchMap[repo] || repositoryMap[repo].default_branch)
             } catch (err) {}
 
             if (Array.isArray(commits) && commits.length > 0) {
-                commits = commits.filter((commit) => commit.author.login === login || commit.committer.login === login)
+                commits = commits.filter((commit) => commit.author.id === userId || commit.committer.id === userId)
                 console.log(chalk.bgMagenta(`Got the ${commits.length} commits from <${repo}> repository!`))
                 commitMap[repo] = commits
             } else if (Array.isArray(commits) && commits.length === 0) {
@@ -180,7 +181,7 @@ export default async () => {
                 for (let i = 0; i < existedRepositories.length; i++) {
                     const repo = existedRepositories[i]
 
-                    data += `# ${repo}(branch: ${repositoryBranchMap[repo] || repositoryMap[repo]})${os.EOL}`
+                    data += `# ${repo}(branch: ${repositoryBranchMap[repo] || repositoryMap[repo].default_branch})${os.EOL}`
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
                         for (let j = 0; j < commits.length; j++) {
