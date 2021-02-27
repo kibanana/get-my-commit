@@ -225,6 +225,7 @@ export default async () => {
         let data = ''
         let subData = ''
         let subDataWithAdditionalData = ''
+        let dateGroup = ''
 
         const existedRepositories: string[] = Object.keys(commitMap)
         switch (fileType[selectedFileType]) {
@@ -246,6 +247,13 @@ export default async () => {
                             let commitDate = authorDate ? authorDate : committerDate
                             commitDate = new Date(commitDate).toISOString()
                             commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
+                            
+                            if (!dateGroup || dateGroup !== commitDate.substr(0, 7)) {
+                                dateGroup = commitDate.substr(0, 7)
+                                const dateGroupText = `### \`${commitDate.substr(0, 7)}\`${os.EOL}${os.EOL}`
+                                subData += dateGroupText
+                                subDataWithAdditionalData += dateGroupText
+                            }
 
                             subData += `- ${message}${os.EOL}`
                             subDataWithAdditionalData += `- ${message} *(${commitDate}, [link](${htmlUrl}))*${os.EOL}${os.EOL}`
@@ -254,6 +262,7 @@ export default async () => {
                     data += `${subData}${os.EOL}---${os.EOL}${os.EOL}${subDataWithAdditionalData}`
                     subData = ''
                     subDataWithAdditionalData = ''
+                    dateGroup = ''
                 }
                 break
             case '.html':
@@ -284,6 +293,13 @@ export default async () => {
                             let commitDate = authorDate ? authorDate : committerDate
                             commitDate = new Date(commitDate).toISOString()
                             commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
+
+                            if (!dateGroup || dateGroup !== commitDate.substr(0, 7)) {
+                                dateGroup = commitDate.substr(0, 7)
+                                const dateGroupText = `    <h3><code>${commitDate.substr(0, 7)}</code></h3>${os.EOL}`
+                                subData += dateGroupText
+                                subDataWithAdditionalData += dateGroupText
+                            }
                             
                             subData += `      <li>${message}</li>${os.EOL}`
                             subDataWithAdditionalData += `      <li>${message} <i> (${commitDate}, <a link href=${htmlUrl}>link</a>)</li><i>${os.EOL}`
@@ -295,6 +311,7 @@ export default async () => {
                     temp += `${subData}<hr>${os.EOL}${subDataWithAdditionalData}`
                     subData = ''
                     subDataWithAdditionalData = ''
+                    dateGroup = ''
                 }
                 data = data.replace('<body></body>', `<body>${os.EOL}${temp}</body>${os.EOL}`)
                 break
