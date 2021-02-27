@@ -10,10 +10,12 @@ import formattingDate from './lib/formattingDate'
 import errorMessage from './lib/errorMessage'
 import fileType from './lib/fileType'
 import dateGroupType from './lib/dateGroupType'
+import Branch from './ts/Branch'
 import Commit from './ts/Commit'
 import Repository from './ts/Repository'
+import User from './ts/User'
 
-export default async () => {
+export default async (): Promise<boolean> => {
     try {
         const { token } = await inquirer.prompt([
             {
@@ -25,20 +27,20 @@ export default async () => {
 
         if (!token) {
             console.log(chalk.red.bold(errorMessage.ERROR_EMPTY_TOKEN))
-            return
+            return false
         }
 
-        let user
+        let user: null | User = null
         try {
             user = await Github.getProfile(token)
         } catch (err) {
             console.log(chalk.red.bold(errorMessage.API.ERROR_USER))
-            return
+            return false
         }
 
         if (!user) {
             console.log(chalk.red.bold(errorMessage.API.EMPTY_USER))
-            return
+            return false
         }
 
         console.log(chalk.bgMagenta('Got a profile!'))
@@ -54,8 +56,6 @@ export default async () => {
             total_private_repos
         } = user
         let { created_at: createdAt, updated_at: updatedAt } = user
-        createdAt = formattingDate(createdAt)
-        updatedAt = formattingDate(updatedAt)
 
         const responseImage = (await axios.get(avatar_url, { responseType: 'arraybuffer' }))
         const image = Buffer.from(responseImage.data, 'binary')
@@ -65,8 +65,8 @@ export default async () => {
         console.log(chalk.magenta(`${name} (${login})`))
         console.log(chalk.magenta(`Bio: ${bio}`))
         console.log(chalk.magenta(`Repositories: ${public_repos} public repos & ${total_private_repos} private repos`))
-        console.log(chalk.magenta(`Updated at ${updatedAt}`))
-        console.log(chalk.magenta(`Created at ${createdAt}`))
+        console.log(chalk.magenta(`Updated at ${formattingDate(createdAt)}`))
+        console.log(chalk.magenta(`Created at ${formattingDate(updatedAt)}`))
 
         const { isCorrectUser } = await inquirer.prompt([
             {
@@ -76,9 +76,11 @@ export default async () => {
             }
         ])
 
-        if (!isCorrectUser) return null
+        if (!isCorrectUser) {
+            return false
+        }
 
-        let repositories
+        let repositories: null | Repository[] = null
         while (true) {
             let i = 0
             const printTextId = setInterval(() => {
@@ -90,9 +92,15 @@ export default async () => {
     
             try {
                 repositories = await Github.getRepository(token)
-            } catch (err) {}
+            } catch (err) {
+                console.log(chalk.red.bold(errorMessage.API.ERROR_REPOSITORIES))
+                return false
+            }
     
-            if (!repositories) return null
+            if (!Array.isArray(repositories) || repositories.length === 0) {
+                console.log(chalk.red.bold(errorMessage.API.EMPTY_REPOSITORIES))
+                return false
+            }
 
             clearInterval(printTextId)
             process.stdout.cursorTo(0)
@@ -110,7 +118,7 @@ export default async () => {
             else repositoryMap[repository.full_name] = repository
         }
 
-        let checkedRepositories
+        let checkedRepositories: null | string[] = null
         while (true) {
             checkedRepositories = (await inquirer.prompt([
                 {
@@ -135,7 +143,7 @@ export default async () => {
 
         const repositoryBranchMap: { [key: string]: string } = {}
         if (isNotFixed && Array.isArray(checkedRepositories) && checkedRepositories.length > 0) {
-            let changedRepositories
+            let changedRepositories: null | string[] = null
             while (true) {
                 changedRepositories = (await inquirer.prompt([
                     {
@@ -150,11 +158,11 @@ export default async () => {
                 if (!Array.isArray(changedRepositories) || changedRepositories.length !== 0) break
             }
 
-            if (!changedRepositories.includes('Quit')) {   
-                for (let i = 0; i < changedRepositories.length; i++) {
-                    const repo = changedRepositories[i]
+            if (!changedRepositories!.includes('Quit')) {   
+                for (let i = 0; i < changedRepositories!.length; i++) {
+                    const repo = changedRepositories![i]
     
-                    let branches
+                    let branches: null | Branch[] = null
                     while (true) {
                         let i = 0
                         const printTextId = setInterval(() => {
@@ -167,7 +175,10 @@ export default async () => {
                      
                         try {
                             branches = await Github.getBranch(token, repositoryMap[repo].full_name)
-                        } catch (err) {}
+                        } catch (err) {
+                            console.log(chalk.red.bold(errorMessage.API.ERROR_BRANCHES))
+                            return false
+                        }
         
                         clearInterval(printTextId)
                         process.stdout.cursorTo(0)
@@ -175,29 +186,31 @@ export default async () => {
                         break
                     }
 
-                    if (branches) {
-                        const { branch } = await inquirer.prompt([
-                            {
-                                type: 'rawlist',
-                                name: 'branch',
-                                message: `Choose one branch that will be the default branch (${repo})`,
-                                choices: [...branches, 'Quit choosing for this repository', 'Quit choosing for all repository'],
-                                pageSize: 15
-                            }
-                        ])
-
-                        if (branch !== 'Quit choosing for this repository' || branch !== 'Quit choosing for all repository') repositoryBranchMap[repo] = branch
-                        else if (branch === 'Quit choosing for all repository') break
+                    if (!Array.isArray(branches) || branches.length === 0) {
+                        console.log(chalk.red.bold(errorMessage.API.EMPTY_BRANCHES))
+                        return false
                     }
+
+                    const { branch } = await inquirer.prompt([
+                        {
+                            type: 'rawlist',
+                            name: 'branch',
+                            message: `Choose one branch that will be the default branch (${repo})`,
+                            choices: [...branches, 'Quit choosing for this repository', 'Quit choosing for all repository'],
+                            pageSize: 15
+                        }
+                    ])
+
+                    if (branch !== 'Quit choosing for this repository' || branch !== 'Quit choosing for all repository') repositoryBranchMap[repo] = branch
+                    else if (branch === 'Quit choosing for all repository') break
                 }
             }
         }
 
         const commitMap: { [key: string]: Commit[] } = {}
-        let commits
-        for (let i = 0; i < checkedRepositories.length; i++) {
-            commits = null
-            const repo = checkedRepositories[i]
+        let commits: null | Commit[] = null
+        for (let i = 0; i < checkedRepositories!.length; i++) {
+            const repo = checkedRepositories![i]
 
             while (true) {
                 let i = 0
@@ -226,6 +239,8 @@ export default async () => {
             } else if (Array.isArray(commits) && commits.length === 0) {
                 console.log(chalk.bgMagenta(`Got nothing(0 commit) from <${repo}> repository!`))
             }
+
+            commits = null
         }
 
         const { selectedFileType } = await inquirer.prompt([
@@ -246,10 +261,7 @@ export default async () => {
             }
         ])
 
-        let data = ''
-        let subData = ''
-        let subDataWithAdditionalData = ''
-        let dateGroup = ''
+        let data = '', subData = '', subDataWithAdditionalData = '', dateGroup = ''
 
         const existedRepositories: string[] = Object.keys(commitMap)
         switch (fileType[selectedFileType]) {
@@ -284,9 +296,7 @@ export default async () => {
                         }
                     }
                     data += `${subData}${os.EOL}---${os.EOL}${os.EOL}${subDataWithAdditionalData}`
-                    subData = ''
-                    subDataWithAdditionalData = ''
-                    dateGroup = ''
+                    subData = '', subDataWithAdditionalData = '', dateGroup = ''
                 }
                 break
             case '.html':
@@ -333,18 +343,24 @@ export default async () => {
                     }
 
                     temp += `${subData}<hr>${os.EOL}${subDataWithAdditionalData}`
-                    subData = ''
-                    subDataWithAdditionalData = ''
-                    dateGroup = ''
+                    subData = '', subDataWithAdditionalData = '', dateGroup = ''
                 }
                 data = data.replace('<body></body>', `<body>${os.EOL}${temp}</body>${os.EOL}`)
                 break
         }
 
-        await util.promisify(fs.writeFile)(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
+        try {
+            await util.promisify(fs.writeFile)(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
+        } catch (err) {
+            console.log(chalk.red.bold(errorMessage.ERROR_WRITE_FILE))
+            return false
+        }
 
         console.log(chalk.bgMagenta(`get_my_commit${fileType[selectedFileType]} file was saved successfully`))
+
+        return true
     } catch (err) {
-        chalk.red.bold(console.error(err))
+        console.log(chalk.red.bold(console.error(err)))
+        return false
     }
 }
