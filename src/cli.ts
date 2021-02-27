@@ -71,6 +71,14 @@ export default async () => {
 
         console.log(chalk.bgMagenta(`Got the ${repositories.length} repositories!`))
 
+        const repositoryMap: { [key: string]: string } = {}
+        for (let i = 0; i < repositories.length; i++) {
+            const repository = repositories[i]
+
+            if (repository.full_name.includes(login)) repositoryMap[repository.name] = repository.default_branch
+            else repositoryMap[repository.full_name] = repository.default_branch
+        }
+
         let checkedRepositories
         while (true) {
             checkedRepositories = (await inquirer.prompt([
@@ -78,10 +86,7 @@ export default async () => {
                     type: 'checkbox',
                     name: 'checkedRepositories',
                     message: 'Select the repositories where you want to get the commits',
-                    choices: repositories.map((repo: Repository) => {
-                        if (repo.full_name.includes(login)) return repo.name
-                        else return repo.full_name
-                    }),
+                    choices: Object.keys(repositoryMap),
                     pageSize: 15
                 }
             ])).checkedRepositories
@@ -93,7 +98,7 @@ export default async () => {
             {
                 type: 'confirm',
                 name: 'isNotFixed',
-                message: 'The default branch is master. Would you like to change to another branch?',
+                message: 'It will use default branch. Would you like to change to another branch?',
             }
         ])
 
@@ -146,7 +151,7 @@ export default async () => {
             const repo = checkedRepositories[i]
 
             try {
-                commits = await Github.getCommit(token, login, repo, repositoryBranchMap[repo] || 'master')
+                commits = await Github.getCommit(token, login, repo, repositoryBranchMap[repo] || repositoryMap[repo])
             } catch (err) {}
 
             if (Array.isArray(commits) && commits.length > 0) {
@@ -175,7 +180,7 @@ export default async () => {
                 for (let i = 0; i < existedRepositories.length; i++) {
                     const repo = existedRepositories[i]
 
-                    data += `# ${repo}(branch: ${repositoryBranchMap[repo] || 'master'})${os.EOL}`
+                    data += `# ${repo}(branch: ${repositoryBranchMap[repo] || repositoryMap[repo]})${os.EOL}`
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
                         for (let j = 0; j < commits.length; j++) {
@@ -198,7 +203,7 @@ export default async () => {
                 for (let i = 0; i < existedRepositories.length; i++) {
                     const repo = existedRepositories[i]
                     
-                    subData = `    <h1>${repo}(branch: ${repositoryBranchMap[repo] || 'master'})</h1>${os.EOL}`
+                    subData = `    <h1>${repo}(branch: ${repositoryBranchMap[repo] || repositoryMap[repo]})</h1>${os.EOL}`
 
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
