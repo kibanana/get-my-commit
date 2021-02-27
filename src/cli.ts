@@ -6,6 +6,7 @@ import os from 'os'
 import * as Github from './lib/github'
 import * as fsAsync from './lib/fsAsync'
 import fileType from './lib/fileType'
+import dateGroupType from './lib/dateGroupType'
 import Commit from './ts/Commit'
 import Repository from './ts/Repository'
 
@@ -222,6 +223,15 @@ export default async () => {
             }
         ])
 
+        let { selecteddateGroupType } = await inquirer.prompt([
+            {
+                type: 'rawlist',
+                name: 'selecteddateGroupType',
+                message: 'Which standard would you like to group the commits?',
+                choices: Object.keys(dateGroupType)
+            }
+        ])
+
         let data = ''
         let subData = ''
         let subDataWithAdditionalData = ''
@@ -248,9 +258,9 @@ export default async () => {
                             commitDate = new Date(commitDate).toISOString()
                             commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
                             
-                            if (!dateGroup || dateGroup !== commitDate.substr(0, 7)) {
-                                dateGroup = commitDate.substr(0, 7)
-                                const dateGroupText = `### \`${commitDate.substr(0, 7)}\`${os.EOL}${os.EOL}`
+                            if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[selecteddateGroupType])) {
+                                dateGroup = commitDate.substr(0, dateGroupType[selecteddateGroupType])
+                                const dateGroupText = `### \`${commitDate.substr(0, dateGroupType[selecteddateGroupType])}\`${os.EOL}${os.EOL}`
                                 subData += dateGroupText
                                 subDataWithAdditionalData += dateGroupText
                             }
@@ -294,9 +304,9 @@ export default async () => {
                             commitDate = new Date(commitDate).toISOString()
                             commitDate = `${commitDate.substr(0, 10).replace(/-/g, '.')} ${commitDate.substr(11, 8)}`
 
-                            if (!dateGroup || dateGroup !== commitDate.substr(0, 7)) {
-                                dateGroup = commitDate.substr(0, 7)
-                                const dateGroupText = `    <h3><code>${commitDate.substr(0, 7)}</code></h3>${os.EOL}`
+                            if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[selecteddateGroupType])) {
+                                dateGroup = commitDate.substr(0, dateGroupType[selecteddateGroupType])
+                                const dateGroupText = `    <h3><code>${commitDate.substr(0, dateGroupType[selecteddateGroupType])}</code></h3>${os.EOL}`
                                 subData += dateGroupText
                                 subDataWithAdditionalData += dateGroupText
                             }
