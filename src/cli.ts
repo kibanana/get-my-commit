@@ -19,7 +19,7 @@ export default async (): Promise<boolean> => {
     try {
         const { token } = await inquirer.prompt([
             {
-                type: 'input',
+                type: 'password',
                 name: 'token',
                 message: 'Enter Personal access token(Github - Settings - Developer settings):'
             }
