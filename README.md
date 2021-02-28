@@ -16,6 +16,8 @@
 
 ### 🏠 [Homepage](https://github.com/woni-d/get-my-commit#readme)
 
+![example](./example.gif)
+
 ## Install
 
 ```sh
