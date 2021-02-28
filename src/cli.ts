@@ -70,8 +70,8 @@ export default async (): Promise<boolean> => {
         console.log(chalk.magenta(`${name} (${login})`))
         console.log(chalk.magenta(`Bio: ${bio}`))
         console.log(chalk.magenta(`Repositories: ${public_repos} public repos & ${total_private_repos} private repos`))
-        console.log(chalk.magenta(`Updated at ${formattingDate(createdAt)}`))
-        console.log(chalk.magenta(`Created at ${formattingDate(updatedAt)}`))
+        console.log(chalk.magenta(`Updated at ${formattingDate(updatedAt)}`))
+        console.log(chalk.magenta(`Created at ${formattingDate(createdAt)}`))
 
         const { isCorrectUser } = await inquirer.prompt([
             {
@@ -304,7 +304,9 @@ export default async (): Promise<boolean> => {
                             const { commit: { author: { date: authorDate }, committer: { date: committerDate } }, html_url: htmlUrl } = commit
                             
                             let { commit: { message } } = commit
-                            message = message.replace(/\n/g, ' ')
+                            message = message
+                                .replace(/\n/g, ' ')
+                                .replace(/(\\|\`|\*|\{|\}|\[|\]|\(|\)|\<|\>|\#|\+|\-|\.|\!)/g, `&zwj;$1`)
 
                             let commitDate = authorDate ? authorDate : committerDate
                             commitDate = formattingDate(commitDate)
@@ -348,8 +350,11 @@ export default async (): Promise<boolean> => {
                             const { commit: { author: { date: authorDate }, committer: { date: committerDate } }, html_url: htmlUrl } = commit
                             
                             let { commit: { message } } = commit
-                            message = message.replace(/\n/g, ' ')
-
+                            message = message
+                                .replace(/\n/g, ' ')
+                                .replace(/\</g, `&lt;`)
+                                .replace(/\>/g, `&gt;`)
+                            
                             let commitDate = authorDate ? authorDate : committerDate
                             commitDate = formattingDate(commitDate)
                             commitDate = `${commitDate} ${commitDate.substr(11, 8)}`
