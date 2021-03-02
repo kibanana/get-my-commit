@@ -12,7 +12,7 @@
   </a>
 </p>
 
-> Get my commits in my repositories
+> Get my commit list as a markdown file or html file in my repositories
 
 ### 🏠 [Homepage](https://github.com/woni-d/get-my-commit#readme)
 
