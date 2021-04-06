@@ -1,6 +1,5 @@
 import inquirer from 'inquirer'
 import terminalImage from 'terminal-image'
-import chalk from 'chalk'
 import axios from 'axios'
 import os from 'os'
 import fs from 'fs'
@@ -10,6 +9,7 @@ import formattingDate from './lib/formattingDate'
 import errorMessage from './lib/errorMessage'
 import fileType from './lib/fileType'
 import dateGroupType from './lib/dateGroupType'
+import themedLog from './lib/themedLog'
 import Branch from './ts/Branch'
 import Commit from './ts/Commit'
 import Repository from './ts/Repository'
@@ -26,7 +26,7 @@ export default async (): Promise<boolean> => {
         ])
 
         if (!token) {
-            console.log(chalk.red.bold(`>>> ${errorMessage.ERROR_EMPTY_TOKEN}`))
+            themedLog.error(`>>> ${errorMessage.ERROR_EMPTY_TOKEN}`)
             return false
         }
 
@@ -34,21 +34,21 @@ export default async (): Promise<boolean> => {
         try {
             user = await Github.getProfile(token)
         } catch (err) {
-            console.log(chalk.red.bold(`>>> ${errorMessage.API.ERROR_USER}`))
+            themedLog.error(`>>> ${errorMessage.API.ERROR_USER}`)
             return false
         }
 
         if (typeof user === 'number') {
             if (user === 401) {
-                console.log(chalk.red.bold(`>>> ${errorMessage.API.UNAUTHORIZED}`))
+                themedLog.error(`>>> ${errorMessage.API.UNAUTHORIZED}`)
             }
             return false
         } else if (!user) {
-            console.log(chalk.red.bold(`>>> ${errorMessage.API.EMPTY_USER}`))
+            themedLog.error(`>>> ${errorMessage.API.EMPTY_USER}`)
             return false
         }
 
-        console.log(chalk.bgMagenta('>>> Got a profile!'))
+        themedLog.process('>>> Got a profile!')
 
         const {
             login,
@@ -66,12 +66,12 @@ export default async (): Promise<boolean> => {
         const image = Buffer.from(responseImage.data, 'binary')
 
         console.log(await terminalImage.buffer(image, { width: '50%', height: '50%' }))
-        console.log(chalk.magenta(`[${url}]`))
-        console.log(chalk.magenta(`${name} (${login})`))
-        console.log(chalk.magenta(`Bio: ${bio}`))
-        console.log(chalk.magenta(`Repositories: ${public_repos} public repos & ${total_private_repos} private repos`))
-        console.log(chalk.magenta(`Updated at ${formattingDate(updatedAt)}`))
-        console.log(chalk.magenta(`Created at ${formattingDate(createdAt)}`))
+        themedLog.profile(`[${url}]`)
+        themedLog.profile(`${name} (${login})`)
+        themedLog.profile(`Bio: ${bio}`)
+        themedLog.profile(`Repositories: ${public_repos} public repos & ${total_private_repos} private repos`)
+        themedLog.profile(`Updated at ${formattingDate(updatedAt)}`)
+        themedLog.profile(`Created at ${formattingDate(createdAt)}`)
 
         const { isCorrectUser } = await inquirer.prompt([
             {
@@ -98,17 +98,17 @@ export default async (): Promise<boolean> => {
             try {
                 repositories = await Github.getRepository(token)
             } catch (err) {
-                console.log(chalk.red.bold(`>>> ${errorMessage.API.ERROR_REPOSITORIES}`))
+                themedLog.error(`>>> ${errorMessage.API.ERROR_REPOSITORIES}`)
                 return false
             }
 
             if (typeof repositories === 'number') {
                 if (repositories === 401) {
-                    console.log(chalk.red.bold(`>>> ${errorMessage.API.UNAUTHORIZED}`))
+                    themedLog.error(`>>> ${errorMessage.API.UNAUTHORIZED}`)
                 }
                 return false
             } else if (!Array.isArray(repositories) || repositories.length === 0) {
-                console.log(chalk.red.bold(`>>> ${errorMessage.API.EMPTY_REPOSITORIES}`))
+                themedLog.error(`>>> ${errorMessage.API.EMPTY_REPOSITORIES}`)
                 return false
             }
 
@@ -118,7 +118,7 @@ export default async (): Promise<boolean> => {
             break
         }
 
-        console.log(chalk.bgMagenta(`>>> Got the ${repositories.length} repositories!`))
+        themedLog.process(`>>> Got the ${repositories.length} repositories!`)
 
         const repositoryMap: { [key: string]: Repository } = {}
         for (let i = 0; i < repositories.length; i++) {
@@ -186,7 +186,7 @@ export default async (): Promise<boolean> => {
                         try {
                             branches = await Github.getBranch(token, repositoryMap[repo].full_name)
                         } catch (err) {
-                            console.log(chalk.red.bold(`>>> ${errorMessage.API.ERROR_BRANCHES}`))
+                            themedLog.error(`>>> ${errorMessage.API.ERROR_BRANCHES}`)
                             return false
                         }
         
@@ -198,11 +198,11 @@ export default async (): Promise<boolean> => {
 
                     if (typeof branches === 'number') {
                         if (branches === 401) {
-                            console.log(chalk.red.bold(`>>> ${errorMessage.API.UNAUTHORIZED}`))
+                            themedLog.error(`>>> ${errorMessage.API.UNAUTHORIZED}`)
                         } 
                         return false
                     } else if (!Array.isArray(branches) || branches.length === 0) {
-                        console.log(chalk.red.bold(`>>> ${errorMessage.API.EMPTY_BRANCHES}`))
+                        themedLog.error(`>>> ${errorMessage.API.EMPTY_BRANCHES}`)
                         return false
                     }
 
@@ -222,7 +222,7 @@ export default async (): Promise<boolean> => {
 
                         repositoryBranchMap[repo] = branch
                     } else {
-                        console.log(chalk.bgMagenta(`>>> There is only one branch in <${repo}> repository`))
+                        themedLog.process(`>>> There is only one branch in <${repo}> repository`)
                     }
                 }
             }
@@ -255,15 +255,15 @@ export default async (): Promise<boolean> => {
 
             if (typeof commits === 'number') {
                 if (commits === 401) {
-                    console.log(chalk.red.bold(`>>> ${errorMessage.API.UNAUTHORIZED}`))
+                    themedLog.error(`>>> ${errorMessage.API.UNAUTHORIZED}`)
                 } 
                 return false
             } else if (Array.isArray(commits) && commits.length > 0) {
                 commits = commits.filter((commit) => (commit.author && commit.author.id === userId) || (commit.committer && commit.committer.id === userId))
-                console.log(chalk.bgMagenta(`>>> Got the ${commits.length} commits from <${repo}> repository(${repositoryBranchMap[repo] || repositoryMap[repo].default_branch} branch)!`))
+                themedLog.process(`>>> Got the ${commits.length} commits from <${repo}> repository(${repositoryBranchMap[repo] || repositoryMap[repo].default_branch} branch)!`)
                 commitMap[repo] = commits
             } else if (Array.isArray(commits) && commits.length === 0) {
-                console.log(chalk.bgMagenta(`>>> Got nothing(0 commit) from <${repo}> repository!`))
+                themedLog.process(`>>> Got nothing(0 commit) from <${repo}> repository!`)
             }
 
             commits = null
@@ -383,15 +383,15 @@ export default async (): Promise<boolean> => {
         try {
             await util.promisify(fs.writeFile)(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
         } catch (err) {
-            console.log(chalk.red.bold(`>>> ${errorMessage.ERROR_WRITE_FILE}`))
+            themedLog.error(`>>> ${errorMessage.ERROR_WRITE_FILE}`)
             return false
         }
 
-        console.log(chalk.bgMagenta(`>>> get_my_commit${fileType[selectedFileType]} file was saved successfully`))
+        themedLog.process(`>>> get_my_commit${fileType[selectedFileType]} file was saved successfully`)
 
         return true
     } catch (err) {
-        console.log(chalk.red.bold(console.error(err)))
+        themedLog.error(err)
         return false
     }
 }

@@ -3,6 +3,7 @@ import chalk from 'chalk'
 import figlet from 'figlet'
 import * as util from 'util'
 import mainProcess from './cli'
+import themedLog from './lib/themedLog'
 
 const main = async () => {
     clear()
@@ -13,11 +14,11 @@ const main = async () => {
     setTimeout(async () => {
         const result = await mainProcess()
         if (result) {
-            console.log(chalk.bgMagenta('>>> End successfully'))
+            themedLog.process('>>> End successfully')
         } else {
-            console.log(chalk.bgMagenta('>>> End with a error'))
+            themedLog.process('>>> End with a error')
         }
     }, 500)
 }
 
-main().catch(err => chalk.red.bold(console.error(err)))
+main().catch(err => themedLog.error(err))
