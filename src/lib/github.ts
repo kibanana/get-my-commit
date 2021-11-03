@@ -29,7 +29,7 @@ export const getBranch = async (token: string, repo: string) => {
             } else {
                 break
             }
-        } catch (err) {
+        } catch (err: any) {
             console.log(err)
             return err.response.status
         }
@@ -65,7 +65,7 @@ export const getCommit = async (token: string, repo: string, sha: string) => {
             } else {
                 break
             }
-        } catch (err) {
+        } catch (err: any) {
             console.log(err)
             return err.response.status
         }
@@ -90,7 +90,7 @@ export const getProfile = async (token: string) => {
             return response.data
         }
         return null
-    } catch (err) {
+    } catch (err: any) {
         console.log(err)
         return err.response.status
     }
@@ -124,7 +124,7 @@ export const getRepository = async (token: string) => {
             } else {
                 break
             }
-        } catch (err) {
+        } catch (err: any) {
             console.log(err)
             return err.response.status
         }

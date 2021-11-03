@@ -390,7 +390,7 @@ export default async (): Promise<boolean> => {
         themedLog.process(`>>> get_my_commit${fileType[selectedFileType]} file was saved successfully`)
 
         return true
-    } catch (err) {
+    } catch (err: any) {
         themedLog.error(err)
         return false
     }
