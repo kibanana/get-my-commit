@@ -1,15 +1,16 @@
-import inquirer from 'inquirer'
-import terminalImage from 'terminal-image'
-import axios from 'axios'
 import os from 'os'
 import fs from 'fs'
 import path from 'path'
 import * as util from 'util'
+import axios from 'axios'
+import inquirer from 'inquirer'
+import terminalImage from 'terminal-image'
 import * as Github from './lib/github'
 import formattingDate from './lib/formattingDate'
 import errorMessage from './lib/errorMessage'
 import fileType from './lib/fileType'
 import dateGroupType from './lib/dateGroupType'
+import * as userAnswerType from './lib/userAnswerType'
 import themedLog from './lib/themedLog'
 import Branch from './ts/Branch'
 import Commit from './ts/Commit'
@@ -17,23 +18,28 @@ import Repository from './ts/Repository'
 import User from './ts/User'
 
 export default async (): Promise<boolean> => {
+    let result = null
+    const answer: { [key: string]: any } = {}
+    
     try {
-        const { token } = await inquirer.prompt([
+        result = await inquirer.prompt([
             {
                 type: 'password',
-                name: 'token',
+                name: userAnswerType.TOKEN,
                 message: 'Enter Personal access token(Github - Settings - Developer settings):'
             }
         ])
 
-        if (!token) {
+        answer[userAnswerType.TOKEN] = result[userAnswerType.TOKEN]
+
+        if (!answer[userAnswerType.TOKEN]) {
             themedLog.error(`>>> ${errorMessage.ERROR_EMPTY_TOKEN}`)
             return false
         }
 
         let user: null | User | number = null
         try {
-            user = await Github.getProfile(token)
+            user = await Github.getProfile(answer[userAnswerType.TOKEN])
         } catch (err) {
             themedLog.error(`>>> ${errorMessage.API.ERROR_USER}`)
             return false
@@ -74,15 +80,17 @@ export default async (): Promise<boolean> => {
         themedLog.profile(`Updated at ${formattingDate(updatedAt)}`)
         themedLog.profile(`Created at ${formattingDate(createdAt)}`)
 
-        const { isCorrectUser } = await inquirer.prompt([
+        result = await inquirer.prompt([
             {
                 type: 'confirm',
-                name: 'isCorrectUser',
+                name: userAnswerType.IS_CORRECT_USER_PROFILE,
                 message: 'Is this profile yours?'
             }
         ])
 
-        if (!isCorrectUser) {
+        answer[userAnswerType.IS_CORRECT_USER_PROFILE] = result[userAnswerType.IS_CORRECT_USER_PROFILE]
+
+        if (!answer[userAnswerType.IS_CORRECT_USER_PROFILE]) {
             return false
         }
 
@@ -97,7 +105,7 @@ export default async (): Promise<boolean> => {
             }, 300)
     
             try {
-                repositories = await Github.getRepository(token)
+                repositories = await Github.getRepository(answer[userAnswerType.TOKEN])
             } catch (err) {
                 themedLog.error(`>>> ${errorMessage.API.ERROR_REPOSITORIES}`)
                 return false
@@ -129,31 +137,32 @@ export default async (): Promise<boolean> => {
             else repositoryMap[repository.full_name] = repository
         }
 
-        let checkedRepositories: null | string[] = null
         while (true) {
-            checkedRepositories = (await inquirer.prompt([
+            result = (await inquirer.prompt([
                 {
                     type: 'checkbox',
-                    name: 'checkedRepositories',
+                    name: userAnswerType.CHECKED_REPOSITORIES,
                     message: 'Select the repositories where you want to get the commits',
                     choices: Object.keys(repositoryMap),
                     pageSize: 15
                 }
-            ])).checkedRepositories
+            ]))
+            answer[userAnswerType.CHECKED_REPOSITORIES] = result[userAnswerType.CHECKED_REPOSITORIES]
 
-            if (!Array.isArray(checkedRepositories) || checkedRepositories.length !== 0) break
+            if (!Array.isArray(answer[userAnswerType.CHECKED_REPOSITORIES]) || answer[userAnswerType.CHECKED_REPOSITORIES].length !== 0) break
         }
 
-        const { isNotFixed } =  await inquirer.prompt([
+        result =  await inquirer.prompt([
             {
                 type: 'confirm',
-                name: 'isNotFixed',
+                name: userAnswerType.IS_NOT_BRANCH_FIXED,
                 message: 'It will use default branch. Would you like to change to another branch?',
             }
         ])
+        answer[userAnswerType.IS_NOT_BRANCH_FIXED] = result[userAnswerType.IS_NOT_BRANCH_FIXED]
 
         const repositoryBranchMap: { [key: string]: string } = {}
-        if (isNotFixed && Array.isArray(checkedRepositories) && checkedRepositories.length > 0) {
+        if (answer[userAnswerType.IS_NOT_BRANCH_FIXED] && Array.isArray(answer[userAnswerType.CHECKED_REPOSITORIES]) && answer[userAnswerType.CHECKED_REPOSITORIES].length > 0) {
             let changedRepositories: null | string[] = null
             while (true) {
                 changedRepositories = (await inquirer.prompt([
@@ -161,7 +170,7 @@ export default async (): Promise<boolean> => {
                         type: 'checkbox',
                         name: 'changedRepositories',
                         message: 'Select the repositories where you want to change branch',
-                        choices: [...checkedRepositories, 'Quit'],
+                        choices: [...answer[userAnswerType.CHECKED_REPOSITORIES], 'Quit'],
                         pageSize: 15
                     }
                 ])).changedRepositories
@@ -185,7 +194,7 @@ export default async (): Promise<boolean> => {
                 
                      
                         try {
-                            branches = await Github.getBranch(token, repositoryMap[repo].full_name)
+                            branches = await Github.getBranch(answer[userAnswerType.TOKEN], repositoryMap[repo].full_name)
                         } catch (err) {
                             themedLog.error(`>>> ${errorMessage.API.ERROR_BRANCHES}`)
                             return false
@@ -208,20 +217,22 @@ export default async (): Promise<boolean> => {
                     }
 
                     if (branches.length > 1) {
-                        const { branch } = await inquirer.prompt([
+                        result = await inquirer.prompt([
                             {
                                 type: 'rawlist',
-                                name: 'branch',
+                                name: userAnswerType.BRANCH,
                                 message: `Choose one branch that will be the default branch (${repo})`,
                                 choices: [...branches, 'Quit choosing for this repository', 'Quit choosing for all repository'],
                                 pageSize: 15
                             }
                         ])
 
-                        if (branch !== 'Quit choosing for this repository' || branch !== 'Quit choosing for all repository') repositoryBranchMap[repo] = branch
-                        else if (branch === 'Quit choosing for all repository') break
+                        answer[userAnswerType.BRANCH] = result[userAnswerType.BRANCH]
 
-                        repositoryBranchMap[repo] = branch
+                        if (answer[userAnswerType.BRANCH] !== 'Quit choosing for this repository' || answer[userAnswerType.BRANCH] !== 'Quit choosing for all repository') repositoryBranchMap[repo] = answer[userAnswerType.BRANCH]
+                        else if (answer[userAnswerType.BRANCH] === 'Quit choosing for all repository') break
+
+                        repositoryBranchMap[repo] = answer[userAnswerType.BRANCH]
                     } else {
                         themedLog.process(`>>> There is only one branch in <${repo}> repository`)
                     }
@@ -231,8 +242,8 @@ export default async (): Promise<boolean> => {
 
         const commitMap: { [key: string]: Commit[] } = {}
         let commits: null | number | Commit[] = null
-        for (let i = 0; i < checkedRepositories!.length; i++) {
-            const repo = checkedRepositories![i]
+        for (let i = 0; i < answer[userAnswerType.CHECKED_REPOSITORIES]!.length; i++) {
+            const repo = answer[userAnswerType.CHECKED_REPOSITORIES]![i]
 
             while (true) {
                 let i = 0
@@ -245,7 +256,7 @@ export default async (): Promise<boolean> => {
         
              
                 try {
-                    commits = await Github.getCommit(token, repositoryMap[repo].full_name, repositoryBranchMap[repo] || repositoryMap[repo].default_branch)
+                    commits = await Github.getCommit(answer[userAnswerType.TOKEN], repositoryMap[repo].full_name, repositoryBranchMap[repo] || repositoryMap[repo].default_branch)
                 } catch (err) {}
 
                 clearInterval(printTextId)
@@ -270,28 +281,30 @@ export default async (): Promise<boolean> => {
             commits = null
         }
 
-        const { selectedFileType } = await inquirer.prompt([
+        result = await inquirer.prompt([
             {
                 type: 'rawlist',
-                name: 'selectedFileType',
+                name: userAnswerType.SELECTED_FILE_TYPE,
                 message: 'Which file type would you like to extract?',
                 choices: Object.keys(fileType)
             }
         ])
+        answer[userAnswerType.SELECTED_FILE_TYPE] = result[userAnswerType.SELECTED_FILE_TYPE]
 
-        let { selecteddateGroupType } = await inquirer.prompt([
+        result = await inquirer.prompt([
             {
                 type: 'rawlist',
-                name: 'selecteddateGroupType',
+                name: userAnswerType.SELECTED_DATA_GROUP_TYPE,
                 message: 'Which standard would you like to group the commits?',
                 choices: Object.keys(dateGroupType)
             }
         ])
+        answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] = result[userAnswerType.SELECTED_DATA_GROUP_TYPE]
 
         let data = '', subData = '', subDataWithAdditionalData = '', dateGroup = ''
 
         const existedRepositories: string[] = Object.keys(commitMap)
-        switch (fileType[selectedFileType]) {
+        switch (fileType[answer[userAnswerType.SELECTED_FILE_TYPE]]) {
             case '.md':
                 for (let i = 0; i < existedRepositories.length; i++) {
                     const repo = existedRepositories[i]
@@ -313,9 +326,9 @@ export default async (): Promise<boolean> => {
                             commitDate = formattingDate(commitDate)
                             commitDate = `${commitDate} ${commitDate.substr(11, 8)}`
                             
-                            if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[selecteddateGroupType])) {
-                                dateGroup = commitDate.substr(0, dateGroupType[selecteddateGroupType])
-                                const dateGroupText = `### \`${commitDate.substr(0, dateGroupType[selecteddateGroupType])}\`${os.EOL}${os.EOL}`
+                            if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])) {
+                                dateGroup = commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])
+                                const dateGroupText = `### \`${commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])}\`${os.EOL}${os.EOL}`
                                 subData += dateGroupText
                                 subDataWithAdditionalData += dateGroupText
                             }
@@ -360,9 +373,9 @@ export default async (): Promise<boolean> => {
                             commitDate = formattingDate(commitDate)
                             commitDate = `${commitDate} ${commitDate.substr(11, 8)}`
 
-                            if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[selecteddateGroupType])) {
-                                dateGroup = commitDate.substr(0, dateGroupType[selecteddateGroupType])
-                                const dateGroupText = `    <h3><code>${commitDate.substr(0, dateGroupType[selecteddateGroupType])}</code></h3>${os.EOL}`
+                            if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])) {
+                                dateGroup = commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])
+                                const dateGroupText = `    <h3><code>${commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])}</code></h3>${os.EOL}`
                                 subData += dateGroupText
                                 subDataWithAdditionalData += dateGroupText
                             }
@@ -389,14 +402,14 @@ export default async (): Promise<boolean> => {
             else {
                 savePath = path.join(savePath, '..')
             }
-            savePath = path.join(savePath, `get_my_commit${fileType[selectedFileType]}`)
+            savePath = path.join(savePath, `get_my_commit${fileType[answer[userAnswerType.SELECTED_FILE_TYPE]]}`)
             await util.promisify(fs.writeFile)(savePath, data)
         } catch (err) {
             themedLog.error(`>>> ${errorMessage.ERROR_WRITE_FILE}`)
             return false
         }
 
-        themedLog.process(`>>> get_my_commit${fileType[selectedFileType]} file was saved successfully`)
+        themedLog.process(`>>> get_my_commit${fileType[answer[userAnswerType.SELECTED_FILE_TYPE]]} file was saved successfully`)
 
         return true
     } catch (err: any) {
