@@ -3,6 +3,7 @@ import terminalImage from 'terminal-image'
 import axios from 'axios'
 import os from 'os'
 import fs from 'fs'
+import path from 'path'
 import * as util from 'util'
 import * as Github from './lib/github'
 import formattingDate from './lib/formattingDate'
@@ -381,7 +382,15 @@ export default async (): Promise<boolean> => {
         }
 
         try {
-            await util.promisify(fs.writeFile)(`${__dirname}/../get_my_commit${fileType[selectedFileType]}`, data)
+            let savePath = __dirname
+            if (__dirname.indexOf('dist') !== -1) {
+                savePath = path.join(savePath, '..', '..')
+            }
+            else {
+                savePath = path.join(savePath, '..')
+            }
+            savePath = path.join(savePath, `get_my_commit${fileType[selectedFileType]}`)
+            await util.promisify(fs.writeFile)(savePath, data)
         } catch (err) {
             themedLog.error(`>>> ${errorMessage.ERROR_WRITE_FILE}`)
             return false
