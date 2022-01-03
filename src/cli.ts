@@ -391,9 +391,9 @@ export default async (): Promise<boolean> => {
                             commitDate = formattingDate(commitDate)
                             commitDate = `${commitDate} ${commitDate.substr(11, 8)}`
 
-                            if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])) {
-                                dateGroup = commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])
-                                const dateGroupText = `    <h3><code>${commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])}</code></h3>${os.EOL}`
+                            if (!dateGroup || dateGroup !== commitDate.substr(0, answer[userAnswerType.SELECTED_DATA_GROUP_TYPE])) {
+                                dateGroup = commitDate.substr(0, answer[userAnswerType.SELECTED_DATA_GROUP_TYPE])
+                                const dateGroupText = `    <h3>${commitDate.substr(0, answer[userAnswerType.SELECTED_DATA_GROUP_TYPE])}</h3>${os.EOL}`
                                 subData += dateGroupText
                             }
                             
