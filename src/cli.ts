@@ -18,8 +18,6 @@ import Repository from './ts/Repository'
 import User from './ts/User'
 import dataGroupType from './lib/dateGroupType'
 
-// TODO merge additionalData into main data
-// TODO check .html
 export default async (): Promise<boolean> => {
     let result = null
     const answer: { [key: string]: any } = {}
@@ -220,7 +218,6 @@ export default async (): Promise<boolean> => {
                     }
 
                     if (branches.length > 1) {
-                        // TODO length===1 -> skip inquirer.prompt
                         result = await inquirer.prompt([
                             {
                                 type: 'rawlist',
@@ -306,7 +303,7 @@ export default async (): Promise<boolean> => {
         ])
         answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] = dataGroupType[result[userAnswerType.SELECTED_DATA_GROUP_TYPE]]
 
-        let data = '', subData = '', subDataWithAdditionalData = '', dateGroup = ''
+        let data = '', subData = '', dateGroup = ''
 
         const existedRepositories: string[] = Object.keys(commitMap)
         switch (fileType[answer[userAnswerType.SELECTED_FILE_TYPE]]) {
@@ -335,16 +332,13 @@ export default async (): Promise<boolean> => {
                                 dateGroup = commitDate.substr(0, answer[userAnswerType.SELECTED_DATA_GROUP_TYPE])
                                 const dateGroupText = `### \`${commitDate.substr(0, answer[userAnswerType.SELECTED_DATA_GROUP_TYPE])}\`${os.EOL}${os.EOL}`
                                 subData += dateGroupText
-                                if (answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] !== dataGroupType['day']) subDataWithAdditionalData += dateGroupText
                             }
 
-                            subData += `- ${message}${os.EOL}`
-                            if (answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] !== dataGroupType['day']) subDataWithAdditionalData += `- ${message} *(${commitDate}, [link](${htmlUrl}))*${os.EOL}${os.EOL}`
+                            subData += `- ${message} *(${commitDate}, [link](${htmlUrl}))*${os.EOL}${os.EOL}`
                         }
                     }
                     data += `${subData}${os.EOL}`
-                    if (answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] !== dataGroupType['day']) data += `---${os.EOL}${os.EOL}${subDataWithAdditionalData}`
-                    subData = '', subDataWithAdditionalData = '', dateGroup = ''
+                    subData = '', dateGroup = ''
                 }
                 break
             case '.html':
@@ -363,7 +357,6 @@ export default async (): Promise<boolean> => {
                     const commits = commitMap[repo]
                     if (Array.isArray(commits) && commits.length > 0) {
                         subData += `    <ul>${os.EOL}`
-                        subDataWithAdditionalData += `    <ul>${os.EOL}`
                         for (let j = 0; j < commits.length; j++) {
                             const commit = commits[j]
 
@@ -383,18 +376,15 @@ export default async (): Promise<boolean> => {
                                 dateGroup = commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])
                                 const dateGroupText = `    <h3><code>${commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])}</code></h3>${os.EOL}`
                                 subData += dateGroupText
-                                subDataWithAdditionalData += dateGroupText
                             }
                             
-                            subData += `      <li>${message}</li>${os.EOL}`
-                            subDataWithAdditionalData += `      <li>${message} <i> (${commitDate}, <a link href=${htmlUrl}>link</a>)</li><i>${os.EOL}`
+                            subData += `      <li>${message} <i> (${commitDate}, <a link href=${htmlUrl}>link</a>)</li><i>${os.EOL}`
                         }
                         subData += `    </ul>${os.EOL}`
-                        subDataWithAdditionalData += `    </ul>${os.EOL}`
                     }
 
-                    temp += `${subData}<hr>${os.EOL}${subDataWithAdditionalData}`
-                    subData = '', subDataWithAdditionalData = '', dateGroup = ''
+                    temp += `${subData}<hr>${os.EOL}`
+                    subData = '', dateGroup = ''
                 }
                 data = data.replace('<body></body>', `<body>${os.EOL}${temp}</body>${os.EOL}`)
                 break
