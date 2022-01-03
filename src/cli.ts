@@ -16,7 +16,10 @@ import Branch from './ts/Branch'
 import Commit from './ts/Commit'
 import Repository from './ts/Repository'
 import User from './ts/User'
+import dataGroupType from './lib/dateGroupType'
 
+// TODO merge additionalData into main data
+// TODO check .html
 export default async (): Promise<boolean> => {
     let result = null
     const answer: { [key: string]: any } = {}
@@ -217,6 +220,7 @@ export default async (): Promise<boolean> => {
                     }
 
                     if (branches.length > 1) {
+                        // TODO length===1 -> skip inquirer.prompt
                         result = await inquirer.prompt([
                             {
                                 type: 'rawlist',
@@ -240,6 +244,7 @@ export default async (): Promise<boolean> => {
             }
         }
 
+        // TODO Refactor
         const commitMap: { [key: string]: Commit[] } = {}
         let commits: null | number | Commit[] = null
         for (let i = 0; i < answer[userAnswerType.CHECKED_REPOSITORIES]!.length; i++) {
@@ -299,7 +304,7 @@ export default async (): Promise<boolean> => {
                 choices: Object.keys(dateGroupType)
             }
         ])
-        answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] = result[userAnswerType.SELECTED_DATA_GROUP_TYPE]
+        answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] = dataGroupType[result[userAnswerType.SELECTED_DATA_GROUP_TYPE]]
 
         let data = '', subData = '', subDataWithAdditionalData = '', dateGroup = ''
 
@@ -326,18 +331,19 @@ export default async (): Promise<boolean> => {
                             commitDate = formattingDate(commitDate)
                             commitDate = `${commitDate} ${commitDate.substr(11, 8)}`
                             
-                            if (!dateGroup || dateGroup !== commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])) {
-                                dateGroup = commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])
-                                const dateGroupText = `### \`${commitDate.substr(0, dateGroupType[answer[userAnswerType.SELECTED_DATA_GROUP_TYPE]])}\`${os.EOL}${os.EOL}`
+                            if (!dateGroup || dateGroup !== commitDate.substr(0, answer[userAnswerType.SELECTED_DATA_GROUP_TYPE])) {
+                                dateGroup = commitDate.substr(0, answer[userAnswerType.SELECTED_DATA_GROUP_TYPE])
+                                const dateGroupText = `### \`${commitDate.substr(0, answer[userAnswerType.SELECTED_DATA_GROUP_TYPE])}\`${os.EOL}${os.EOL}`
                                 subData += dateGroupText
-                                subDataWithAdditionalData += dateGroupText
+                                if (answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] !== dataGroupType['day']) subDataWithAdditionalData += dateGroupText
                             }
 
                             subData += `- ${message}${os.EOL}`
-                            subDataWithAdditionalData += `- ${message} *(${commitDate}, [link](${htmlUrl}))*${os.EOL}${os.EOL}`
+                            if (answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] !== dataGroupType['day']) subDataWithAdditionalData += `- ${message} *(${commitDate}, [link](${htmlUrl}))*${os.EOL}${os.EOL}`
                         }
                     }
-                    data += `${subData}${os.EOL}---${os.EOL}${os.EOL}${subDataWithAdditionalData}`
+                    data += `${subData}${os.EOL}`
+                    if (answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] !== dataGroupType['day']) data += `---${os.EOL}${os.EOL}${subDataWithAdditionalData}`
                     subData = '', subDataWithAdditionalData = '', dateGroup = ''
                 }
                 break
