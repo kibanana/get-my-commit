@@ -16,7 +16,6 @@ import Branch from './ts/Branch'
 import Commit from './ts/Commit'
 import Repository from './ts/Repository'
 import User from './ts/User'
-import dataGroupType from './lib/dateGroupType'
 
 export default async (): Promise<boolean> => {
     let result = null
@@ -31,12 +30,12 @@ export default async (): Promise<boolean> => {
             }
         ])
 
-        answer[userAnswerType.TOKEN] = result[userAnswerType.TOKEN]
-
-        if (!answer[userAnswerType.TOKEN]) {
+        if (!result[userAnswerType.TOKEN]) {
             themedLog.error(`>>> ${errorMessage.ERROR_EMPTY_TOKEN}`)
             return false
         }
+
+        answer[userAnswerType.TOKEN] = result[userAnswerType.TOKEN]
 
         let user: null | User | number = null
         try {
@@ -46,13 +45,14 @@ export default async (): Promise<boolean> => {
             return false
         }
 
-        if (typeof user === 'number') {
+        if (!user) {
+            themedLog.error(`>>> ${errorMessage.API.EMPTY_USER}`)
+            return false
+        }
+        else if (typeof user === 'number') {
             if (user === 401) {
                 themedLog.error(`>>> ${errorMessage.API.UNAUTHORIZED}`)
             }
-            return false
-        } else if (!user) {
-            themedLog.error(`>>> ${errorMessage.API.EMPTY_USER}`)
             return false
         }
 
@@ -89,11 +89,11 @@ export default async (): Promise<boolean> => {
             }
         ])
 
-        answer[userAnswerType.IS_CORRECT_USER_PROFILE] = result[userAnswerType.IS_CORRECT_USER_PROFILE]
-
-        if (!answer[userAnswerType.IS_CORRECT_USER_PROFILE]) {
+        if (!result[userAnswerType.IS_CORRECT_USER_PROFILE]) {
             return false
         }
+
+        answer[userAnswerType.IS_CORRECT_USER_PROFILE] = result[userAnswerType.IS_CORRECT_USER_PROFILE]
 
         let repositories: null | number | Repository[] = null
         while (true) {
@@ -112,15 +112,16 @@ export default async (): Promise<boolean> => {
                 return false
             }
 
-            if (typeof repositories === 'number') {
+            if (!Array.isArray(repositories) || (Array.isArray(repositories) && repositories.length === 0)) {
+                themedLog.error(`>>> ${errorMessage.API.EMPTY_REPOSITORIES}`)
+                return false
+            }
+            else if (typeof repositories === 'number') {
                 if (repositories === 401) {
                     themedLog.error(`>>> ${errorMessage.API.UNAUTHORIZED}`)
                 }
                 return false
-            } else if (!Array.isArray(repositories) || repositories.length === 0) {
-                themedLog.error(`>>> ${errorMessage.API.EMPTY_REPOSITORIES}`)
-                return false
-            }
+            } 
 
             clearInterval(printTextId)
             process.stdout.cursorTo(0)
@@ -148,12 +149,16 @@ export default async (): Promise<boolean> => {
                     pageSize: 15
                 }
             ]))
+
             answer[userAnswerType.CHECKED_REPOSITORIES] = result[userAnswerType.CHECKED_REPOSITORIES]
 
-            if (!Array.isArray(answer[userAnswerType.CHECKED_REPOSITORIES]) || answer[userAnswerType.CHECKED_REPOSITORIES].length !== 0) break
+            if (
+                !Array.isArray(answer[userAnswerType.CHECKED_REPOSITORIES]) ||
+                answer[userAnswerType.CHECKED_REPOSITORIES].length !== 0
+            ) break
         }
 
-        result =  await inquirer.prompt([
+        result = await inquirer.prompt([
             {
                 type: 'confirm',
                 name: userAnswerType.IS_NOT_BRANCH_FIXED,
@@ -163,25 +168,30 @@ export default async (): Promise<boolean> => {
         answer[userAnswerType.IS_NOT_BRANCH_FIXED] = result[userAnswerType.IS_NOT_BRANCH_FIXED]
 
         const repositoryBranchMap: { [key: string]: string } = {}
-        if (answer[userAnswerType.IS_NOT_BRANCH_FIXED] && Array.isArray(answer[userAnswerType.CHECKED_REPOSITORIES]) && answer[userAnswerType.CHECKED_REPOSITORIES].length > 0) {
-            let changedRepositories: null | string[] = null
+        if (
+            answer[userAnswerType.IS_NOT_BRANCH_FIXED] &&
+            Array.isArray(answer[userAnswerType.CHECKED_REPOSITORIES]) &&
+            answer[userAnswerType.CHECKED_REPOSITORIES].length > 0
+        ) {
+            let branchChangeRepositories: string[] = []
             while (true) {
-                changedRepositories = (await inquirer.prompt([
+                result = await inquirer.prompt([
                     {
                         type: 'checkbox',
-                        name: 'changedRepositories',
+                        name: userAnswerType.BRANCH_CHANGE_REPOSITORIES,
                         message: 'Select the repositories where you want to change branch',
                         choices: [...answer[userAnswerType.CHECKED_REPOSITORIES], 'Quit'],
                         pageSize: 15
                     }
-                ])).changedRepositories
+                ])
+                branchChangeRepositories = result[userAnswerType.BRANCH_CHANGE_REPOSITORIES]
 
-                if (!Array.isArray(changedRepositories) || changedRepositories.length !== 0) break
+                if (Array.isArray(branchChangeRepositories) && branchChangeRepositories.length !== 0) break
             }
 
-            if (!changedRepositories!.includes('Quit')) {   
-                for (let i = 0; i < changedRepositories!.length; i++) {
-                    const repo = changedRepositories![i]
+            if (!branchChangeRepositories.includes('Quit')) {   
+                for (let i = 0; i < branchChangeRepositories.length; i++) {
+                    const repo = branchChangeRepositories[i]
     
                     let branches: null | number | Branch[] = null
                     while (true) {
@@ -207,13 +217,14 @@ export default async (): Promise<boolean> => {
                         break
                     }
 
-                    if (typeof branches === 'number') {
+                    if (!Array.isArray(branches) || (Array.isArray(branches) && branches.length === 0)) {
+                        themedLog.error(`>>> ${errorMessage.API.EMPTY_BRANCHES}`)
+                        return false
+                    }
+                    else if (typeof branches === 'number') {
                         if (branches === 401) {
                             themedLog.error(`>>> ${errorMessage.API.UNAUTHORIZED}`)
                         } 
-                        return false
-                    } else if (!Array.isArray(branches) || branches.length === 0) {
-                        themedLog.error(`>>> ${errorMessage.API.EMPTY_BRANCHES}`)
                         return false
                     }
 
@@ -230,7 +241,10 @@ export default async (): Promise<boolean> => {
 
                         answer[userAnswerType.BRANCH] = result[userAnswerType.BRANCH]
 
-                        if (answer[userAnswerType.BRANCH] !== 'Quit choosing for this repository' || answer[userAnswerType.BRANCH] !== 'Quit choosing for all repository') repositoryBranchMap[repo] = answer[userAnswerType.BRANCH]
+                        if (
+                            answer[userAnswerType.BRANCH] !== 'Quit choosing for this repository' ||
+                            answer[userAnswerType.BRANCH] !== 'Quit choosing for all repository'
+                        ) repositoryBranchMap[repo] = answer[userAnswerType.BRANCH]
                         else if (answer[userAnswerType.BRANCH] === 'Quit choosing for all repository') break
 
                         repositoryBranchMap[repo] = answer[userAnswerType.BRANCH]
@@ -241,7 +255,6 @@ export default async (): Promise<boolean> => {
             }
         }
 
-        // TODO Refactor
         const commitMap: { [key: string]: Commit[] } = {}
         let commits: null | number | Commit[] = null
         for (let i = 0; i < answer[userAnswerType.CHECKED_REPOSITORIES]!.length; i++) {
@@ -255,10 +268,13 @@ export default async (): Promise<boolean> => {
                     const dots = new Array(i + 1).join('.')
                     process.stdout.write(`Getting commits${dots}`)
                 }, 300)
-        
-             
+
                 try {
-                    commits = await Github.getCommit(answer[userAnswerType.TOKEN], repositoryMap[repo].full_name, repositoryBranchMap[repo] || repositoryMap[repo].default_branch)
+                    commits = await Github.getCommit(
+                        answer[userAnswerType.TOKEN],
+                        repositoryMap[repo].full_name,
+                        repositoryBranchMap[repo] || repositoryMap[repo].default_branch
+                    )
                 } catch (err) {}
 
                 clearInterval(printTextId)
@@ -273,7 +289,10 @@ export default async (): Promise<boolean> => {
                 } 
                 return false
             } else if (Array.isArray(commits) && commits.length > 0) {
-                commits = commits.filter((commit) => (commit.author && commit.author.id === userId) || (commit.committer && commit.committer.id === userId))
+                commits = commits.filter((commit) => {
+                        return (commit.author && commit.author.id === userId) ||(commit.committer && commit.committer.id === userId)
+                    }
+                )
                 themedLog.process(`>>> Got the ${commits.length} commits from <${repo}> repository(${repositoryBranchMap[repo] || repositoryMap[repo].default_branch} branch)!`)
                 commitMap[repo] = commits
             } else if (Array.isArray(commits) && commits.length === 0) {
@@ -301,7 +320,7 @@ export default async (): Promise<boolean> => {
                 choices: Object.keys(dateGroupType)
             }
         ])
-        answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] = dataGroupType[result[userAnswerType.SELECTED_DATA_GROUP_TYPE]]
+        answer[userAnswerType.SELECTED_DATA_GROUP_TYPE] = dateGroupType[result[userAnswerType.SELECTED_DATA_GROUP_TYPE]]
 
         let data = '', subData = '', dateGroup = ''
 
